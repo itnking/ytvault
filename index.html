@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="referrer-policy" content="strict-origin-when-cross-origin">
 <title>YT Vault</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
@@ -26,6 +28,9 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
 .brand-name span{color:var(--red);}
 .btn-new{background:var(--red);color:#fff;border:none;border-radius:var(--radius2);padding:.55rem 1.1rem;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:opacity .15s;}
 .btn-new:hover{opacity:.85;}
+.home-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.btn-ghost{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius2);padding:.5rem .85rem;font-family:'Syne',sans-serif;font-size:.74rem;font-weight:700;cursor:pointer;transition:all .15s;}
+.btn-ghost:hover{border-color:var(--border3);color:var(--text);}
 .home-hero{padding:3.5rem 2.5rem 1.5rem;}
 .home-hero h1{font-size:clamp(1.8rem,4vw,3rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;max-width:600px;}
 .home-hero h1 em{font-style:normal;color:var(--red);}
@@ -143,7 +148,6 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
 .vthumb .play-ov svg{width:38px;height:38px;fill:#fff;opacity:0;transform:scale(.8);transition:opacity .2s,transform .2s;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));}
 .vthumb:hover .play-ov svg{opacity:1;transform:scale(1);}
 .nothumb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--text3);}
-.dead-ov{position:absolute;inset:0;background:rgba(0,0,0,.52);display:flex;align-items:center;justify-content:center;}
 .dead-tag{background:var(--red);color:#fff;font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:4px;}
 .vinfo{padding:.75rem;}
 .vnum{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--text3);margin-bottom:4px;letter-spacing:.06em;}
@@ -158,6 +162,35 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
 .vbtn.yt{color:var(--red);text-decoration:none;border:1px solid rgba(255,45,45,.3);background:transparent;}
 .vbtn.yt:hover{background:var(--red-dim);}
 .no-result{grid-column:1/-1;text-align:center;padding:4rem 1rem;color:var(--text3);font-family:'Space Mono',monospace;font-size:.78rem;line-height:2;}
+
+/* enriched unavailable overlay */
+.dead-ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.66));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px;text-align:center;}
+.dead-box{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.dead-since{font-family:'Space Mono',monospace;font-size:.56rem;color:#ffd9d9;letter-spacing:.02em;}
+.corner-flag{position:absolute;top:7px;left:7px;z-index:2;display:flex;align-items:center;gap:4px;background:rgba(255,45,45,.92);color:#fff;font-size:.55rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:5px;box-shadow:0 2px 6px rgba(0,0,0,.4);}
+.corner-flag.priv{background:rgba(245,166,35,.95);color:#1a1200;}
+
+/* currently playing card */
+.vcard.playing{border-color:var(--red);box-shadow:0 0 0 1px var(--red),0 8px 26px rgba(255,45,45,.18);}
+.vcard.playing .vnum::after{content:' · ▶ en lecture';color:var(--red);font-weight:700;}
+
+/* floating "jump" button */
+.jump-fab{position:fixed;right:18px;bottom:18px;z-index:120;display:none;align-items:center;gap:7px;background:var(--red);color:#fff;border:none;border-radius:30px;padding:.65rem 1.05rem;font-family:'Syne',sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;box-shadow:0 6px 22px rgba(255,45,45,.4);transition:transform .15s,opacity .2s;}
+.jump-fab.show{display:flex;animation:fabIn .25s ease;}
+.jump-fab:hover{transform:translateY(-2px);}
+.jump-fab span{white-space:nowrap;}
+@keyframes fabIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* auto-sync toggle + status */
+.btn-sm.autosync.on{border-color:rgba(29,185,84,.5);color:var(--green);}
+.btn-sm.autosync.syncing{border-color:var(--red);color:var(--red);}
+.sync-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:2px;vertical-align:middle;}
+.sync-dot.spin{animation:pulse 1s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:.35;}50%{opacity:1;}}
+.player-open-yt{font-size:.66rem;color:var(--text3);text-decoration:none;font-family:'Space Mono',monospace;white-space:nowrap;}
+.player-open-yt:hover{color:var(--red);}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(20px);background:var(--surface3);border:1px solid var(--border3);color:var(--text);font-size:.74rem;font-weight:600;padding:.6rem 1.05rem;border-radius:10px;z-index:130;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;font-family:'Syne',sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.5);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px;}
 @media(max-width:640px){
@@ -177,11 +210,16 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
       <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M21.8 8s-.2-1.4-.8-2c-.8-.8-1.6-.8-2-.9C16.2 5 12 5 12 5s-4.2 0-7 .1c-.4.1-1.2.1-2 .9-.6.6-.8 2-.8 2S2 9.6 2 11.2v1.5c0 1.6.2 3.2.2 3.2s.2 1.4.8 2c.8.8 1.8.8 2.3.8C6.8 19 12 19 12 19s4.2 0 7-.1c.4-.1 1.2-.1 2-.9.6-.6.8-2 .8-2S22 14.4 22 12.8v-1.5C22 9.6 21.8 8 21.8 8zM10 15V9l5.5 3L10 15z"/></svg></div>
       <div class="brand-name">YT<span>Vault</span></div>
     </div>
-    <button class="btn-new" onclick="openAddModal()">+ Nouvelle playlist</button>
+    <div class="home-actions">
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importBackup(event)">
+      <button class="btn-ghost" onclick="document.getElementById('importFile').click()" title="Restaurer une sauvegarde .json">⬆ Importer</button>
+      <button class="btn-ghost" onclick="exportBackup()" title="Télécharger une sauvegarde de toutes tes playlists">⬇ Sauvegarde</button>
+      <button class="btn-new" onclick="openAddModal()">+ Nouvelle playlist</button>
+    </div>
   </div>
   <div class="home-hero">
     <h1>Tes playlists,<br><em>à l'abri</em> pour toujours.</h1>
-    <p>Sauvegarde tes playlists YouTube dans ce fichier HTML. Données embarquées, lisibles partout.</p>
+    <p>Tes playlists sont stockées dans <b>ce navigateur</b>. Une autre fenêtre privée ou un autre appareil démarre donc vide&nbsp;: utilise <b>⬇ Sauvegarde</b> puis <b>⬆ Importer</b> pour les transporter partout.</p>
   </div>
   <div class="api-setup-card">
     <div class="api-label">🔑 Clé API</div>
@@ -207,6 +245,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
       <div class="pl-hmeta" id="plHeaderMeta"></div>
     </div>
     <div class="pl-hactions">
+      <button class="btn-sm autosync" id="autoSyncBtn" onclick="toggleAutoSync()" title="Synchronisation automatique avec YouTube">⟳ <span>Auto</span></button>
       <button class="btn-sm" id="refreshBtn" onclick="refreshCurrentPlaylist()">↻ <span>Actualiser</span></button>
       <button class="btn-sm" onclick="openExportModal()">⬇ <span>Exporter</span></button>
     </div>
@@ -214,20 +253,21 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
 
   <!-- PLAYER -->
   <div class="player-wrap" id="playerWrap">
-    <iframe id="playerIframe" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+    <iframe id="playerIframe" src="" allowfullscreen allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin"></iframe>
     <div class="player-blocked" id="playerBlocked">
       <p>Cette vidéo a désactivé la lecture externe.<br>Regarde-la directement sur YouTube.</p>
       <a id="playerFallbackLink" href="#" target="_blank">▶ Ouvrir sur YouTube</a>
     </div>
     <div class="player-info">
       <div class="player-title" id="playerTitle"></div>
+      <a class="player-open-yt" id="playerOpenYt" href="#" target="_blank" rel="noopener">↗ Ouvrir sur YouTube</a>
       <button class="player-close" onclick="closePlayer()">✕ Fermer</button>
     </div>
   </div>
 
   <div class="save-banner" id="saveBanner">
-    <span>💾 Nouvelles données — télécharge le fichier mis à jour pour les conserver partout.</span>
-    <button onclick="saveHTMLFile()">Télécharger</button>
+    <span>💾 Données modifiées — elles sont déjà enregistrées dans ce navigateur. Tu peux aussi télécharger une copie portable.</span>
+    <button onclick="saveHTMLFile()">Télécharger une copie</button>
   </div>
 
   <div class="controls-bar">
@@ -246,7 +286,9 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
   <div class="videos-container">
     <div class="video-grid" id="videoGrid"></div>
   </div>
+  <button class="jump-fab" id="jumpFab" onclick="jumpFabClick()"></button>
 </div>
+<div class="toast" id="toast"></div>
 
 <!-- ADD MODAL -->
 <div class="modal-overlay" id="addModal" onclick="overlayClick(event,'addModal')">
@@ -268,17 +310,25 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
   <div class="modal-box">
     <div class="modal-title">Exporter</div>
     <div class="export-opts">
-      <button class="export-opt" onclick="exportJSON();closeModal('exportModal')">
-        <span class="export-opt-icon">{ }</span>
-        <div><div class="export-opt-name">JSON</div><div class="export-opt-desc">Données brutes — pour réimporter</div></div>
+      <button class="export-opt" id="pdfOptBtn" onclick="exportPDF()">
+        <span class="export-opt-icon">📄</span>
+        <div><div class="export-opt-name">PDF (téléchargement)</div><div class="export-opt-desc">Fichier .pdf enregistré directement sur ton appareil</div></div>
+      </button>
+      <button class="export-opt" onclick="exportPDFPrint();closeModal('exportModal')">
+        <span class="export-opt-icon">🖨️</span>
+        <div><div class="export-opt-name">PDF (impression)</div><div class="export-opt-desc">Ouvre l'aperçu d'impression du navigateur</div></div>
       </button>
       <button class="export-opt" onclick="exportCSV();closeModal('exportModal')">
         <span class="export-opt-icon">⊞</span>
         <div><div class="export-opt-name">CSV</div><div class="export-opt-desc">Excel / Google Sheets</div></div>
       </button>
-      <button class="export-opt" onclick="exportPDF();closeModal('exportModal')">
-        <span class="export-opt-icon">📑</span>
-        <div><div class="export-opt-name">PDF (impression)</div><div class="export-opt-desc">Impression → Destination → Enregistrer en PDF</div></div>
+      <button class="export-opt" onclick="exportJSON();closeModal('exportModal')">
+        <span class="export-opt-icon">{ }</span>
+        <div><div class="export-opt-name">JSON (cette playlist)</div><div class="export-opt-desc">Données brutes de la playlist ouverte</div></div>
+      </button>
+      <button class="export-opt" onclick="exportBackup();closeModal('exportModal')">
+        <span class="export-opt-icon">💾</span>
+        <div><div class="export-opt-name">Sauvegarde complète</div><div class="export-opt-desc">Toutes les playlists — à réimporter via « ⬆ Importer »</div></div>
       </button>
     </div>
     <div class="mactions" style="margin-top:1.1rem">
@@ -335,6 +385,7 @@ function showPage(id) {
 }
 
 function goHome() {
+  clearAutoSync();
   closePlayer();
   showPage('home-page');
   renderHome();
@@ -345,21 +396,26 @@ function openPlaylist(plId) {
   var pl = DB.playlists[plId]; if (!pl) return;
   document.getElementById('plHeaderName').textContent = pl.name;
   document.getElementById('saveBanner').style.display = 'none';
+  window._playingId = null;
   closePlayer();
   showPage('playlist-page');
   document.getElementById('searchInput').value = '';
   document.getElementById('filterSel').value = 'added_desc';
   renderVideos();
   updateMeta();
+  applyAutoSyncUI();
+  maybeAutoSyncOnOpen();
 }
 
 function updateMeta() {
   var pl = DB.playlists[currentPlId]; if (!pl) return;
   var total = pl.videos.length;
   var dead = pl.videos.filter(function(v){ return v.deleted; }).length;
+  var syncTxt = window._syncing
+    ? 'Synchronisation…'
+    : 'Sync ' + (pl.lastSync ? timeAgo(pl.lastSync) : 'jamais');
   document.getElementById('plHeaderMeta').textContent =
-    total + ' vidéos' + (dead ? ' · ' + dead + ' indisponibles' : '') +
-    ' · Sync ' + (pl.lastSync ? new Date(pl.lastSync).toLocaleDateString('fr-FR') : 'jamais');
+    total + ' vidéos' + (dead ? ' · ' + dead + ' indisponibles' : '') + ' · ' + syncTxt;
 }
 
 // ══════════════════════════════════════════════
@@ -410,6 +466,7 @@ async function fetchYT(plId, onProg, onLog) {
         thumbnail: thumb,
         url: 'https://www.youtube.com/watch?v=' + vid,
         deleted: isDead,
+        deletedKind: isDead ? (s.title === 'Private video' ? 'private' : 'deleted') : null,
         addedAt: s.publishedAt || '',
         publishedAt: s.videoPublishedAt || '',
         position: s.position || i
@@ -477,10 +534,19 @@ function setPbar(pct) {
 // ══════════════════════════════════════════════
 // REFRESH — conserve les données des vidéos supprimées
 // ══════════════════════════════════════════════
-async function refreshCurrentPlaylist() {
+async function refreshCurrentPlaylist(opts) {
+  opts = opts || {};
+  var silent = !!opts.silent;
   var pl = DB.playlists[currentPlId]; if (!pl) return;
+  if (!DB.apiKey) { if(!silent) document.getElementById('plHeaderMeta').textContent = 'Clé API manquante.'; return; }
+  if (window._syncing) return; // never overlap two syncs
+  window._syncing = true;
+
   var btn = document.getElementById('refreshBtn');
-  btn.disabled = true; btn.textContent = '...';
+  var asBtn = document.getElementById('autoSyncBtn');
+  if(!silent){ btn.disabled = true; btn.textContent = '...'; }
+  if(asBtn) asBtn.classList.add('syncing');
+  updateMeta();
 
   try {
     // Build map of ALL previously known videos (by id) — so we never lose data
@@ -488,51 +554,130 @@ async function refreshCurrentPlaylist() {
     pl.videos.forEach(function(v){ oldMap[v.id] = v; });
 
     var fresh = await fetchYT(currentPlId, function(){}, function(m){
-      document.getElementById('plHeaderMeta').textContent = m;
+      if(!silent) document.getElementById('plHeaderMeta').textContent = m;
     });
 
     var freshIds = {};
     fresh.forEach(function(v){ freshIds[v.id] = true; });
 
-    // For each freshly fetched video:
-    // — if it's "deleted/private" BUT we have old data → restore the real title/thumb/channel
     var merged = fresh.map(function(v) {
-      if (v.deleted && oldMap[v.id] && oldMap[v.id].title && !oldMap[v.id].deleted) {
-        // Was alive before — preserve all original data, just mark as deleted
-        return Object.assign({}, oldMap[v.id], {
-          deleted: true,
-          deletedAt: oldMap[v.id].deletedAt || new Date().toISOString()
-        });
+      var old = oldMap[v.id];
+      if (v.deleted) {
+        if (old) {
+          return Object.assign({}, old, {
+            title:       isPlaceholderTitle(old.title) ? v.title : old.title,
+            channel:     old.channel || v.channel || '',
+            thumbnail:   old.thumbnail || v.thumbnail || '',
+            url:         old.url || v.url,
+            addedAt:     old.addedAt || v.addedAt || '',
+            publishedAt: old.publishedAt || v.publishedAt || '',
+            deleted:     true,
+            deletedKind: old.deletedKind || v.deletedKind || 'deleted',
+            deletedAt:   old.deletedAt || new Date().toISOString()
+          });
+        }
+        return v;
       }
-      // Otherwise keep fresh data but don't overwrite known-good thumbnail if fresh has none
-      if (oldMap[v.id] && !v.thumbnail && oldMap[v.id].thumbnail) {
-        v.thumbnail = oldMap[v.id].thumbnail;
-      }
+      if (old && !v.thumbnail && old.thumbnail) v.thumbnail = old.thumbnail;
       return v;
     });
 
-    // Videos that disappeared entirely from the API — keep them as deleted
     Object.keys(oldMap).forEach(function(id) {
       if (!freshIds[id]) {
-        var kept = Object.assign({}, oldMap[id], {
-          deleted: true,
-          deletedAt: oldMap[id].deletedAt || new Date().toISOString()
-        });
-        merged.push(kept);
+        var o = oldMap[id];
+        merged.push(Object.assign({}, o, {
+          title:       isPlaceholderTitle(o.title) ? '[Vidéo supprimée]' : o.title,
+          deleted:     true,
+          deletedKind: o.deletedKind || 'deleted',
+          deletedAt:   o.deletedAt || new Date().toISOString()
+        }));
       }
     });
+
+    // Detect what changed (for the toast)
+    var addedCount = fresh.filter(function(v){ return !oldMap[v.id]; }).length;
+    var newlyDead  = merged.filter(function(v){ return v.deleted && oldMap[v.id] && !oldMap[v.id].deleted; }).length;
 
     pl.videos = merged;
     pl.lastSync = new Date().toISOString();
     saveDB();
-    updateMeta();
     renderVideos();
-    document.getElementById('saveBanner').style.display = 'flex';
+
+    var parts = [];
+    if(addedCount) parts.push('+'+addedCount+' ajoutée'+(addedCount>1?'s':''));
+    if(newlyDead)  parts.push(newlyDead+' devenue'+(newlyDead>1?'s':'')+' indisponible'+(newlyDead>1?'s':''));
+    if(parts.length){ toast('↻ '+parts.join(' · ')); if(!silent) document.getElementById('saveBanner').style.display = 'flex'; }
+    else if(!silent){ toast('↻ Déjà à jour'); }
   } catch(e) {
-    document.getElementById('plHeaderMeta').textContent = 'Erreur : ' + e.message;
+    if(!silent) document.getElementById('plHeaderMeta').textContent = 'Erreur : ' + e.message;
+    else console.warn('Auto-sync échec :', e.message);
+  } finally {
+    window._syncing = false;
+    if(!silent){ btn.disabled = false; btn.textContent = '↻ Actualiser'; }
+    if(asBtn) asBtn.classList.remove('syncing');
+    updateMeta();
   }
-  btn.disabled = false; btn.textContent = '↻ Actualiser';
 }
+
+// ══════════════════════════════════════════════
+// AUTO-SYNC (autonome)
+// ══════════════════════════════════════════════
+var AUTO_SYNC_INTERVAL_MS = 5*60*1000; // re-sync toutes les 5 min pendant la consultation
+var AUTO_SYNC_STALE_MS    = 30*1000;   // ne re-sync pas à l'ouverture si déjà fait il y a <30s
+var autoSyncTimer = null;
+
+function autoSyncEnabled(){ return !(DB.settings && DB.settings.autoSync === false); } // défaut: activé
+
+function applyAutoSyncUI(){
+  var b = document.getElementById('autoSyncBtn'); if(!b) return;
+  var on = autoSyncEnabled();
+  b.classList.toggle('on', on);
+  var sp = b.querySelector('span'); if(sp) sp.textContent = on ? 'Auto' : 'Manuel';
+  b.title = on ? 'Synchro auto activée — clique pour désactiver'
+              : 'Synchro auto désactivée — clique pour activer';
+}
+
+function scheduleAutoSync(){
+  clearAutoSync();
+  if(!autoSyncEnabled()) return;
+  autoSyncTimer = setInterval(function(){
+    if(document.hidden) return;
+    if(currentPlId && document.getElementById('playlist-page').classList.contains('active')){
+      refreshCurrentPlaylist({silent:true});
+    }
+  }, AUTO_SYNC_INTERVAL_MS);
+}
+function clearAutoSync(){ if(autoSyncTimer){ clearInterval(autoSyncTimer); autoSyncTimer=null; } }
+
+function toggleAutoSync(){
+  if(!DB.settings) DB.settings = {};
+  DB.settings.autoSync = !autoSyncEnabled();
+  saveDB();
+  applyAutoSyncUI();
+  if(autoSyncEnabled() && currentPlId){
+    scheduleAutoSync();
+    if(DB.apiKey) refreshCurrentPlaylist({silent:true});
+    toast('⟳ Synchro auto activée');
+  } else {
+    clearAutoSync();
+    toast('⟳ Synchro auto désactivée');
+  }
+}
+
+function maybeAutoSyncOnOpen(){
+  if(!autoSyncEnabled() || !DB.apiKey){ clearAutoSync(); return; }
+  scheduleAutoSync();
+  var pl = DB.playlists[currentPlId];
+  var stale = !pl || !pl.lastSync || (Date.now() - new Date(pl.lastSync).getTime()) > AUTO_SYNC_STALE_MS;
+  if(stale) refreshCurrentPlaylist({silent:true});
+}
+
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden) return;
+  if(currentPlId && autoSyncEnabled() && document.getElementById('playlist-page').classList.contains('active')){
+    maybeAutoSyncOnOpen();
+  }
+});
 
 // ══════════════════════════════════════════════
 // HOME RENDER
@@ -627,14 +772,23 @@ function renderVideos() {
     var thumb = v.thumbnail
       ? '<img src="'+v.thumbnail+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
       : '<div class="nothumb">🎬</div>';
+    var kindLabel = v.deletedKind==='private' ? 'Privée' : 'Supprimée';
+    var kindIcon  = v.deletedKind==='private' ? '🔒' : '🚫';
+    var since = v.deleted ? fmtD(v.deletedAt) : '';
+    var cornerFlag = v.deleted
+      ? '<span class="corner-flag'+(v.deletedKind==='private'?' priv':'')+'">'+kindIcon+' '+kindLabel+'</span>'
+      : '';
     var deadOv = v.deleted
-      ? '<div class="dead-ov"><span class="dead-tag">'+(v.title&&v.title.includes('privée')?'Privée':'Supprimée')+'</span></div>'
+      ? '<div class="dead-ov"><div class="dead-box"><span class="dead-tag">'+kindLabel+'</span>'
+        +'<span class="dead-since">'+(since?('depuis le '+since):'date inconnue')+'</span>'
+        +'</div></div>'
       : '';
     var playBtn = !v.deleted
       ? '<button class="vbtn play" onclick="playIdx('+idx+')">▶ Lire</button>'
       : '';
-    html += '<div class="vcard'+(v.deleted?' dead':'') +'">'
+    html += '<div class="vcard'+(v.deleted?' dead':'')+(v.id===window._playingId?' playing':'')+'" data-vid="'+esc(v.id)+'">'
       +'<div class="vthumb" onclick="'+(v.deleted?'':'playIdx('+idx+')')+'"><div style="width:100%;height:100%;position:relative">'+thumb+'</div>'
+      +cornerFlag
       +(v.deleted?deadOv:'<div class="play-ov"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>')
       +'</div>'
       +'<div class="vinfo">'
@@ -645,6 +799,8 @@ function renderVideos() {
       +'</div></div>';
   }
   grid.innerHTML = html;
+  markPlayingCard();
+  updateJumpFab();
 }
 
 // ══════════════════════════════════════════════
@@ -663,23 +819,78 @@ function playIdx(i) {
   blocked.style.display = 'none';
   titleEl.textContent = v.title || '';
   fallback.href = v.url;
+  document.getElementById('playerOpenYt').href = v.url;
 
-  // Use youtube-nocookie.com to maximize embed compatibility
+  // Simple embed URL — works on hosted, local file, and portable copies alike
+  iframe.referrerPolicy = 'strict-origin-when-cross-origin';
   iframe.src = 'https://www.youtube-nocookie.com/embed/' + v.id + '?autoplay=1&rel=0';
+
+  window._playingId = v.id;
+  markPlayingCard();
 
   wrap.classList.add('open');
   wrap.scrollIntoView({behavior:'smooth', block:'start'});
-
-  // Detect if embed was blocked (youtube posts error via postMessage)
-  iframe.onload = function() {};
+  updateJumpFab();
 }
 
+function markPlayingCard(){
+  document.querySelectorAll('.vcard.playing').forEach(function(c){ c.classList.remove('playing'); });
+  if(window._playingId){
+    var card = document.querySelector('.vcard[data-vid="'+window._playingId+'"]');
+    if(card) card.classList.add('playing');
+  }
+}
+
+// ── floating "jump to player / jump to video" button ──
+function isInView(el){
+  if(!el) return false;
+  var r = el.getBoundingClientRect();
+  return r.bottom > 70 && r.top < (window.innerHeight - 40);
+}
+function updateJumpFab(){
+  var fab = document.getElementById('jumpFab'); if(!fab) return;
+  var wrap = document.getElementById('playerWrap');
+  var active = wrap.classList.contains('open') && window._playingId;
+  if(!active){ fab.classList.remove('show'); return; }
+  var card = document.querySelector('.vcard[data-vid="'+window._playingId+'"]');
+  if(isInView(wrap)){
+    // player on screen → jump down to the playing card in the list
+    if(card){
+      fab.dataset.target = 'card';
+      fab.innerHTML = '↓ <span>Revenir à la vidéo</span>';
+      fab.classList.add('show');
+    } else {
+      fab.classList.remove('show'); // card not in current filter
+    }
+  } else {
+    // scrolled away → jump back up to the player
+    fab.dataset.target = 'player';
+    fab.innerHTML = '▶ <span>Revenir au lecteur</span>';
+    fab.classList.add('show');
+  }
+}
+function jumpFabClick(){
+  var fab = document.getElementById('jumpFab');
+  var wrap = document.getElementById('playerWrap');
+  if(fab.dataset.target === 'card'){
+    var card = document.querySelector('.vcard[data-vid="'+window._playingId+'"]');
+    if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+  } else {
+    wrap.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+var _fabRaf = null;
+window.addEventListener('scroll', function(){
+  if(_fabRaf) return;
+  _fabRaf = requestAnimationFrame(function(){ _fabRaf=null; updateJumpFab(); });
+}, {passive:true});
+
 window.addEventListener('message', function(e) {
-  // YouTube sends info:{"video_data":{...}} or error events
+  // Only trust messages coming from YouTube's own frames
+  if (!/youtube(-nocookie)?\.com$/.test((e.origin||'').replace(/^https?:\/\//,''))) return;
   try {
     var d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
     if (d && d.info && d.info.errorCode) {
-      // Embed blocked — show fallback
       document.getElementById('playerIframe').style.display = 'none';
       document.getElementById('playerBlocked').style.display = 'block';
     }
@@ -690,6 +901,9 @@ function closePlayer() {
   var wrap = document.getElementById('playerWrap');
   wrap.classList.remove('open');
   document.getElementById('playerIframe').src = '';
+  window._playingId = null;
+  markPlayingCard();
+  updateJumpFab();
 }
 
 // ══════════════════════════════════════════════
@@ -717,7 +931,7 @@ function exportCSV() {
   dl(new Blob(['\uFEFF'+rows.map(function(r){return r.join(',');}).join('\n')],{type:'text/csv;charset=utf-8'}), slug(pl.name)+'-'+today()+'.csv');
 }
 
-function exportPDF() {
+function exportPDFPrint() {
   var pl = DB.playlists[currentPlId]; if (!pl) return;
   var d = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
   var rows = pl.videos.map(function(v,i){
@@ -725,7 +939,7 @@ function exportPDF() {
     return '<tr'+(v.deleted?' class="del"':'')+'>'
       +'<td class="n">#'+String(i+1).padStart(3,'0')+'</td>'
       +'<td class="th">'+(v.thumbnail?'<img src="'+v.thumbnail+'">':'—')+'</td>'
-      +'<td><b>'+((v.title||'').replace(/</g,'&lt;'))+'</b>'+(v.deleted?' <span class="badge">'+(v.title&&v.title.includes('privée')?'Privée':'Supprimée')+'</span>':'')+'<br><small>'+((v.channel||'—').replace(/</g,'&lt;'))+'</small></td>'
+      +'<td><b>'+((v.title||'').replace(/</g,'&lt;'))+'</b>'+(v.deleted?' <span class="badge">'+(v.deletedKind==='private'?'Privée':'Supprimée')+'</span>':'')+'<br><small>'+((v.channel||'—').replace(/</g,'&lt;'))+'</small></td>'
       +'<td><a href="'+v.url+'">'+v.url+'</a></td>'
       +'<td>'+af+'</td>'
       +'</tr>';
@@ -749,10 +963,168 @@ function exportPDF() {
   w.document.close();
 }
 
+// ── Real downloadable PDF (jsPDF + autotable, loaded on demand) ──
+function loadScript(src){
+  return new Promise(function(res,rej){
+    if(document.querySelector('script[data-src="'+src+'"]')){ res(); return; }
+    var s=document.createElement('script');
+    s.src=src; s.setAttribute('data-src',src);
+    s.onload=function(){res();};
+    s.onerror=function(){rej(new Error('Échec du chargement de la librairie PDF (connexion ?).'));};
+    document.head.appendChild(s);
+  });
+}
+
+function loadThumb(url){
+  return new Promise(function(res){
+    if(!url){ res(null); return; }
+    var img=new Image(); img.crossOrigin='anonymous';
+    var done=false;
+    var t=setTimeout(function(){ if(!done){done=true;res(null);} }, 6000);
+    img.onload=function(){
+      if(done) return; done=true; clearTimeout(t);
+      try{
+        var w=160, h=Math.round(w*img.naturalHeight/img.naturalWidth)||90;
+        var c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        res({data:c.toDataURL('image/jpeg',0.72), w:w, h:h});
+      }catch(e){ res(null); } // cross-origin taint → skip image
+    };
+    img.onerror=function(){ if(done) return; done=true; clearTimeout(t); res(null); };
+    img.src=url;
+  });
+}
+
+async function exportPDF(){
+  var pl = DB.playlists[currentPlId]; if(!pl) return;
+  var btn = document.getElementById('pdfOptBtn');
+  var nameEl = btn ? btn.querySelector('.export-opt-name') : null;
+  var original = nameEl ? nameEl.textContent : '';
+  if(btn){ btn.disabled = true; }
+  if(nameEl){ nameEl.textContent = 'Génération du PDF…'; }
+  try{
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+    var vids = pl.videos;
+
+    // Preload thumbnails (best effort; failures simply omit the image)
+    var thumbs = {};
+    await Promise.all(vids.map(function(v){
+      return loadThumb(v.thumbnail).then(function(r){ thumbs[v.id]=r; });
+    }));
+
+    var d = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+    doc.setFontSize(16); doc.setTextColor(20); doc.text(pl.name, 14, 15);
+    doc.setFontSize(9); doc.setTextColor(120);
+    doc.text(vids.length+' vidéos · exporté le '+d, 14, 21);
+
+    var body = vids.map(function(v,i){
+      var af = v.addedAt ? new Date(v.addedAt).toLocaleDateString('fr-FR') : '';
+      var status = v.deleted ? (v.deletedKind==='private'?'Privée':'Supprimée') : '';
+      var titleCell = (v.title||'') + (v.channel?('\n'+v.channel):'');
+      return [String(i+1), '', titleCell, status, af, v.url||''];
+    });
+
+    doc.autoTable({
+      startY: 25,
+      head: [['#','Miniature','Titre / Chaîne','Statut','Ajouté','Lien']],
+      body: body,
+      styles:{fontSize:8, cellPadding:2, valign:'middle', overflow:'linebreak', minCellHeight:16},
+      headStyles:{fillColor:[20,20,22], textColor:[255,255,255], fontSize:7.5},
+      columnStyles:{
+        0:{cellWidth:10, textColor:[150,150,150]},
+        1:{cellWidth:30},
+        2:{cellWidth:95},
+        3:{cellWidth:20},
+        4:{cellWidth:22},
+        5:{cellWidth:'auto', textColor:[26,115,232], fontSize:6.5}
+      },
+      didParseCell:function(data){
+        if(data.section==='body'){
+          var v=vids[data.row.index];
+          if(v && v.deleted) data.cell.styles.fillColor=[255,245,245];
+          if(data.column.index===3 && v && v.deleted) data.cell.styles.textColor=[255,45,45];
+        }
+      },
+      didDrawCell:function(data){
+        if(data.section==='body' && data.column.index===1){
+          var v=vids[data.row.index]; var t=v && thumbs[v.id];
+          if(t){
+            var cw=data.cell.width-2, ch=cw*t.h/t.w;
+            var maxh=data.cell.height-2;
+            if(ch>maxh){ ch=maxh; cw=ch*t.w/t.h; }
+            try{ doc.addImage(t.data,'JPEG', data.cell.x+1, data.cell.y+1, cw, ch); }catch(e){}
+          }
+        }
+      }
+    });
+
+    doc.save(slug(pl.name)+'-'+today()+'.pdf');
+    closeModal('exportModal');
+  }catch(e){
+    alert('Erreur PDF : '+e.message+'\n\nTu peux utiliser « PDF (impression) » à la place.');
+  }finally{
+    if(btn){ btn.disabled = false; }
+    if(nameEl){ nameEl.textContent = original; }
+  }
+}
+
+// ── Full backup (all playlists + API key) ──
+function exportBackup(){
+  dl(new Blob([JSON.stringify(DB, null, 2)],{type:'application/json'}), 'ytvault-sauvegarde-'+today()+'.json');
+}
+
+function importBackup(ev){
+  var file = ev.target.files && ev.target.files[0];
+  if(!file){ return; }
+  var reader = new FileReader();
+  reader.onload = function(){
+    try{
+      var imported = JSON.parse(reader.result);
+      if(!imported || typeof imported !== 'object' || !imported.playlists){
+        throw new Error('Ce fichier n\'est pas une sauvegarde complète. Utilise un fichier créé via « ⬇ Sauvegarde ».');
+      }
+      var n = Object.keys(imported.playlists).length;
+      if(!confirm('Importer cette sauvegarde ?\n\n'+n+' playlist(s).\nLes données actuelles de ce navigateur seront remplacées.')){ ev.target.value=''; return; }
+      DB = { apiKey: imported.apiKey || DB.apiKey || '', playlists: imported.playlists || {}, settings: imported.settings || DB.settings || { autoSync:true } };
+      saveDB();
+      if(DB.apiKey) document.getElementById('apiKeyInput').value = DB.apiKey;
+      renderHome();
+      alert('✓ Sauvegarde importée — '+n+' playlist(s).');
+    }catch(e){
+      alert('Erreur d\'import : '+e.message);
+    }
+    ev.target.value='';
+  };
+  reader.readAsText(file);
+}
+
 // ══════════════════════════════════════════════
 // UTILS
 // ══════════════════════════════════════════════
+function isPlaceholderTitle(t){
+  if(!t) return true;
+  return t==='[Vidéo supprimée]' || t==='[Vidéo privée]'
+      || t==='Deleted video' || t==='Private video';
+}
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtD(iso){ if(!iso) return ''; var d=new Date(iso); return isNaN(d.getTime())?'':d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}); }
+function timeAgo(iso){
+  var t=new Date(iso).getTime(); if(isNaN(t)) return 'jamais';
+  var s=Math.floor((Date.now()-t)/1000);
+  if(s<60) return 'à l\'instant';
+  if(s<3600) return 'il y a '+Math.floor(s/60)+' min';
+  if(s<86400) return 'il y a '+Math.floor(s/3600)+' h';
+  return 'le '+new Date(iso).toLocaleDateString('fr-FR');
+}
+var _toastT=null;
+function toast(msg){
+  var el=document.getElementById('toast'); if(!el) return;
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(_toastT); _toastT=setTimeout(function(){ el.classList.remove('show'); }, 3200);
+}
 function dl(blob,name){ var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click(); }
 function today(){ return new Date().toISOString().slice(0,10); }
 function slug(s){ return String(s||'file').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
@@ -765,6 +1137,7 @@ function overlayClick(e,id){ if(e.target===document.getElementById(id)) closeMod
 // ══════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', function(){
   loadDB();
+  if(!DB.settings) DB.settings = { autoSync:true };
   renderHome();
 });
 </script>

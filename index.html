@@ -72,9 +72,9 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
 .modal-title{font-size:1rem;font-weight:800;margin-bottom:1.25rem;letter-spacing:-.02em;}
 .mfield{margin-bottom:.9rem;}
 .mfield label{display:block;font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:5px;}
-.mfield input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius2);padding:.55rem .8rem;color:var(--text);font-family:'Space Mono',monospace;font-size:.78rem;outline:none;transition:border-color .2s;}
-.mfield input:focus{border-color:var(--red);}
-.mfield input::placeholder{color:var(--text3);}
+.mfield input,.mfield textarea{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius2);padding:.55rem .8rem;color:var(--text);font-family:'Space Mono',monospace;font-size:.78rem;outline:none;transition:border-color .2s;resize:vertical;}
+.mfield input:focus,.mfield textarea:focus{border-color:var(--red);}
+.mfield input::placeholder,.mfield textarea::placeholder{color:var(--text3);}
 .mactions{display:flex;gap:8px;margin-top:1.25rem;}
 .btn-primary{flex:1;background:var(--red);color:#fff;border:none;border-radius:var(--radius2);padding:.6rem 1rem;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:opacity .15s;}
 .btn-primary:hover{opacity:.85;}
@@ -192,6 +192,119 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
 .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(20px);background:var(--surface3);border:1px solid var(--border3);color:var(--text);font-size:.74rem;font-weight:600;padding:.6rem 1.05rem;border-radius:10px;z-index:130;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;font-family:'Syne',sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.5);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+/* user actions on cards */
+.vuser{display:flex;gap:6px;margin:.4rem 0 .2rem;}
+.uicon{background:var(--surface2);border:1px solid var(--border);color:var(--text3);border-radius:6px;width:30px;height:26px;font-size:.8rem;cursor:pointer;transition:all .15s;line-height:1;display:flex;align-items:center;justify-content:center;}
+.uicon:hover{border-color:var(--border3);color:var(--text);}
+.uicon.on{color:var(--yellow);border-color:rgba(245,166,35,.5);background:rgba(245,166,35,.08);}
+.uicon.watch.on,.vcard.watched .uicon.watch.on{color:var(--green);border-color:rgba(29,185,84,.5);background:rgba(29,185,84,.08);}
+.vnote{font-size:.7rem;color:var(--text2);background:var(--surface2);border-left:2px solid var(--yellow);padding:.35rem .5rem;border-radius:4px;margin:.3rem 0;line-height:1.45;word-break:break-word;}
+.vcard.watched{opacity:.62;}
+.vcard.watched:hover{opacity:.92;}
+.vcard.fav{border-color:rgba(245,166,35,.4);}
+.vbtn.rec{background:rgba(245,166,35,.08);border-color:rgba(245,166,35,.35);color:var(--yellow);}
+.vbtn.rec:hover{background:rgba(245,166,35,.16);}
+
+/* clickable stat chips */
+.chip{cursor:pointer;border:1px solid var(--border2);border-radius:20px;padding:.1rem .6rem;transition:all .15s;}
+.chip:hover{border-color:var(--border3);background:var(--surface2);}
+.chip.dc{color:var(--red);border-color:rgba(255,45,45,.3);}
+
+/* change log modal */
+.modal-sub{font-size:.74rem;color:var(--text3);margin:-.4rem 0 1rem;line-height:1.5;}
+.log-body{max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:.7rem;}
+.log-entry{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.7rem .85rem;}
+.log-date{font-family:'Space Mono',monospace;font-size:.66rem;color:var(--text3);margin-bottom:.4rem;}
+.log-line{font-size:.78rem;font-weight:700;margin-top:.35rem;}
+.log-line.add{color:var(--green);}
+.log-line.dead{color:var(--red);}
+.log-line.back{color:var(--yellow);}
+.log-titles{margin:.25rem 0 0;padding-left:1.1rem;font-weight:400;color:var(--text2);font-size:.72rem;line-height:1.6;}
+
+/* compact action icons (bottom-left of thumbnail) — video click stays priority */
+.thumb-actions{position:absolute;left:5px;bottom:5px;z-index:4;display:flex;gap:3px;}
+.tact{width:21px;height:21px;border-radius:5px;border:none;background:rgba(0,0,0,.6);color:#fff;font-size:.62rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.78;transition:all .13s;padding:0;}
+.vcard:hover .tact{opacity:1;}
+.tact:hover{background:rgba(0,0,0,.88);transform:scale(1.12);}
+.tact.on{background:rgba(245,166,35,.92);color:#1a1200;opacity:1;}
+.tact.watch.on{background:rgba(29,185,84,.92);color:#04210f;}
+/* duration badge (bottom-right) */
+.dur-badge{position:absolute;right:6px;bottom:6px;z-index:3;background:rgba(0,0,0,.82);color:#fff;font-size:.62rem;font-weight:600;font-family:'Space Mono',monospace;padding:1px 5px;border-radius:4px;}
+/* tags */
+/* playlist badge in global view */
+.pl-badge{display:inline-block;background:var(--red-dim);color:var(--red2);border:1px solid rgba(255,45,45,.25);border-radius:5px;padding:0 .4rem;font-weight:700;margin-right:.2rem;}
+/* recap banner */
+.recap-banner{display:flex;align-items:center;gap:8px;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.35);color:var(--text);border-radius:10px;padding:.6rem .9rem;margin:0 0 .9rem;font-size:.8rem;cursor:pointer;transition:background .15s;}
+.recap-banner:hover{background:rgba(245,166,35,.18);}
+/* stats dashboard */
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:.4rem;}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.8rem;text-align:center;}
+.stat-num{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--red2);}
+.stat-lbl{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:.2rem;}
+.stat-section{font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;margin:1.1rem 0 .5rem;color:var(--text);}
+.stat-bars{display:flex;flex-direction:column;gap:.35rem;}
+.stat-bar{display:flex;align-items:center;gap:.5rem;font-size:.72rem;}
+.stat-bar-label{flex:0 0 38%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2);}
+.stat-bar-track{flex:1;height:9px;background:var(--surface3);border-radius:5px;overflow:hidden;}
+.stat-bar-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--red2));border-radius:5px;}
+.stat-bar-val{flex:0 0 auto;color:var(--text3);font-family:'Space Mono',monospace;}
+.top-chans{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.3rem;}
+.top-chans li{display:flex;justify-content:space-between;gap:1rem;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.4rem .6rem;font-size:.74rem;}
+.top-chans li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.top-chans li b{color:var(--red2);}
+
+/* multi-select channel filter */
+.ms-wrap{position:relative;}
+.ms-toggle{cursor:pointer;text-align:left;min-width:150px;}
+.ms-toggle.active{border-color:var(--red);color:var(--text);}
+.ms-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;min-width:210px;max-width:280px;max-height:300px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius2);box-shadow:0 10px 30px rgba(0,0,0,.5);padding:.35rem;}
+.ms-menu.open{display:block;}
+.ms-actions{display:flex;gap:6px;padding:.2rem .2rem .4rem;border-bottom:1px solid var(--border);margin-bottom:.3rem;}
+.ms-actions button{flex:1;background:var(--surface3);border:1px solid var(--border);color:var(--text2);border-radius:5px;padding:.3rem;font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer;}
+.ms-actions button:hover{color:var(--text);border-color:var(--border3);}
+.ms-item{display:flex;align-items:center;gap:.5rem;padding:.32rem .4rem;border-radius:5px;cursor:pointer;font-size:.74rem;color:var(--text2);}
+.ms-item:hover{background:var(--surface3);color:var(--text);}
+.ms-item input{accent-color:var(--red);cursor:pointer;flex:0 0 auto;}
+.ms-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ms-empty{padding:.5rem;color:var(--text3);font-size:.74rem;text-align:center;}
+
+/* viewing-stat labels */
+.stat-hint{font-weight:400;font-size:.66rem;color:var(--text3);}
+.vs-list li{align-items:flex-start;}
+.vs-title{color:var(--text3);font-weight:400;font-size:.68rem;}
+.views{color:var(--red2);font-weight:700;}
+
+/* player nav buttons */
+.player-nav{background:var(--surface3);border:1px solid var(--border2);color:var(--text2);border-radius:7px;padding:.4rem .6rem;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .14s;white-space:nowrap;}
+.player-nav:hover{color:var(--text);border-color:var(--border3);}
+.player-nav.autoplay.on{border-color:rgba(29,185,84,.55);color:var(--green);background:rgba(29,185,84,.1);}
+@media(max-width:560px){ .player-nav.autoplay span{display:none;} }
+
+/* drag & drop reorder */
+.draggable-card{cursor:grab;}
+.draggable-card:active{cursor:grabbing;}
+.draggable-card.dragover{outline:2px dashed var(--red);outline-offset:2px;}
+.hint-chip{color:var(--text3);font-style:italic;}
+
+/* undo button in toast */
+.toast-undo{background:var(--red);color:#fff;border:none;border-radius:6px;padding:.2rem .6rem;margin-left:.5rem;font-family:'Syne',sans-serif;font-size:.7rem;font-weight:700;cursor:pointer;pointer-events:auto;}
+
+/* sticky player on mobile */
+@media(max-width:680px){
+  .player-wrap.open{position:sticky;top:0;z-index:55;background:var(--bg);box-shadow:0 6px 18px rgba(0,0,0,.45);}
+}
+
+/* ───────── LIGHT THEME ───────── */
+html.light{
+  --bg:#f5f4ef;--surface:#ffffff;--surface2:#f1f0ea;--surface3:#e7e6dd;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);--border3:rgba(0,0,0,0.24);
+  --text:#1b1b18;--text2:#56554e;--text3:#8b8a80;
+  --red:#e01b1b;--red2:#d8401c;--red-dim:rgba(224,27,27,0.08);
+  --green:#138a3e;--yellow:#b07d13;
+}
+html.light .dur-badge,html.light .corner-flag{color:#fff;}
+html.light .tact{background:rgba(0,0,0,.55);color:#fff;}
+
 ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px;}
 @media(max-width:640px){
   .home-header,.home-hero,.playlists-section,.api-setup-card{padding-left:1.2rem;padding-right:1.2rem;}
@@ -212,6 +325,9 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
     </div>
     <div class="home-actions">
       <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importBackup(event)">
+      <button class="btn-ghost" onclick="openAllVideos()" title="Parcourir toutes les vidéos de toutes les playlists">🔎 Toutes les vidéos</button>
+      <button class="btn-ghost" onclick="openStatsModal()" title="Tableau de bord">📊 Stats</button>
+      <button class="btn-ghost" id="themeBtn" onclick="toggleTheme()" title="Mode clair / sombre">🌙</button>
       <button class="btn-ghost" onclick="document.getElementById('importFile').click()" title="Restaurer une sauvegarde .json">⬆ Importer</button>
       <button class="btn-ghost" onclick="exportBackup()" title="Télécharger une sauvegarde de toutes tes playlists">⬇ Sauvegarde</button>
       <button class="btn-new" onclick="openAddModal()">+ Nouvelle playlist</button>
@@ -246,10 +362,14 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
     </div>
     <div class="pl-hactions">
       <button class="btn-sm autosync" id="autoSyncBtn" onclick="toggleAutoSync()" title="Synchronisation automatique avec YouTube">⟳ <span>Auto</span></button>
+      <button class="btn-sm" onclick="openLogModal()" title="Journal des changements">📜 <span>Journal</span></button>
+      <button class="btn-sm" onclick="openPlaylistStats()" title="Statistiques de cette playlist">📊 <span>Stats</span></button>
       <button class="btn-sm" id="refreshBtn" onclick="refreshCurrentPlaylist()">↻ <span>Actualiser</span></button>
       <button class="btn-sm" onclick="openExportModal()">⬇ <span>Exporter</span></button>
     </div>
   </div>
+
+  <div class="recap-banner" id="recapBanner" onclick="openLogModal()" style="display:none"></div>
 
   <!-- PLAYER -->
   <div class="player-wrap" id="playerWrap">
@@ -259,6 +379,9 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
       <a id="playerFallbackLink" href="#" target="_blank">▶ Ouvrir sur YouTube</a>
     </div>
     <div class="player-info">
+      <button class="player-nav" id="prevBtn" onclick="playPrev()" title="Vidéo précédente (P ou ←)">⏮</button>
+      <button class="player-nav" id="nextBtn" onclick="playNext()" title="Vidéo suivante (N ou →)">⏭</button>
+      <button class="player-nav autoplay" id="autoplayBtn" onclick="toggleAutoplay()" title="Lecture automatique (basée sur la durée)">🔁 <span>Autoplay</span></button>
       <div class="player-title" id="playerTitle"></div>
       <a class="player-open-yt" id="playerOpenYt" href="#" target="_blank" rel="noopener">↗ Ouvrir sur YouTube</a>
       <button class="player-close" onclick="closePlayer()">✕ Fermer</button>
@@ -280,7 +403,22 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
       <option value="added_asc">Ajout : plus anciens</option>
       <option value="published_desc">Publication : plus récentes</option>
       <option value="published_asc">Publication : plus anciennes</option>
+      <option value="deleted_desc">Disparition : plus récentes</option>
+      <option value="duration_desc">Durée : plus longues</option>
+      <option value="duration_asc">Durée : plus courtes</option>
+      <option value="manual">Mon ordre ✋ (glisser-déposer)</option>
     </select>
+    <select class="filter-sel" id="showSel" onchange="renderVideos()">
+      <option value="all">Tout afficher</option>
+      <option value="dead">Indisponibles</option>
+      <option value="fav">Favoris ★</option>
+      <option value="watched">Déjà vues 👁</option>
+      <option value="unwatched">Non vues</option>
+    </select>
+    <div class="ms-wrap" id="chanFilter">
+      <button type="button" class="filter-sel ms-toggle" id="chanToggle" onclick="toggleChanMenu(event)">Toutes les chaînes ▾</button>
+      <div class="ms-menu" id="chanMenu"></div>
+    </div>
   </div>
   <div class="stats-bar" id="statsBar"></div>
   <div class="videos-container">
@@ -288,14 +426,41 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
   </div>
   <button class="jump-fab" id="jumpFab" onclick="jumpFabClick()"></button>
 </div>
+
+<div id="all-page" class="page">
+  <div class="pl-header">
+    <button class="btn-back" onclick="goHome()">← Accueil</button>
+    <div class="pl-hinfo">
+      <h2>🔎 Toutes les vidéos</h2>
+      <div class="pl-hmeta">Recherche dans toutes tes playlists</div>
+    </div>
+  </div>
+  <div class="controls-bar">
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="allSearch" placeholder="Rechercher partout (titre, chaîne, note, tag)..." oninput="renderAllVideos()" />
+    </div>
+    <select class="filter-sel" id="allShowSel" onchange="renderAllVideos()">
+      <option value="all">Tout afficher</option>
+      <option value="dead">Indisponibles</option>
+      <option value="fav">Favoris ★</option>
+      <option value="watched">Déjà vues 👁</option>
+      <option value="dupes">Doublons</option>
+    </select>
+  </div>
+  <div class="stats-bar" id="allStats"></div>
+  <div class="videos-container">
+    <div class="video-grid" id="allGrid"></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <!-- ADD MODAL -->
 <div class="modal-overlay" id="addModal" onclick="overlayClick(event,'addModal')">
   <div class="modal-box">
     <div class="modal-title">Ajouter une playlist</div>
-    <div class="mfield"><label>Nom</label><input type="text" id="newPlName" placeholder="Ex: Beats trap, Favourites..." /></div>
-    <div class="mfield"><label>URL de la playlist YouTube</label><input type="text" id="newPlUrl" placeholder="https://www.youtube.com/playlist?list=PL..." /></div>
+    <div class="mfield"><label>Nom <span style="color:var(--text3)">(optionnel — ignoré si plusieurs playlists)</span></label><input type="text" id="newPlName" placeholder="Ex: Beats trap, Favourites..." /></div>
+    <div class="mfield"><label>URL(s) de playlist YouTube <span style="color:var(--text3)">(une par ligne pour en ajouter plusieurs)</span></label><textarea id="newPlUrl" rows="3" placeholder="https://www.youtube.com/playlist?list=PL...&#10;https://www.youtube.com/playlist?list=PL..."></textarea></div>
     <div class="pbar" id="addPbar"><div class="pfill" id="addPfill"></div></div>
     <div class="mlog" id="addLog"></div>
     <div class="mactions">
@@ -337,6 +502,37 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
   </div>
 </div>
 
+<div class="modal-overlay" id="logModal" onclick="overlayClick(event,'logModal')">
+  <div class="modal-box">
+    <div class="modal-title">📜 Journal d'évolution</div>
+    <div class="modal-sub">Chaque synchronisation qui détecte un changement est enregistrée ici.</div>
+    <div class="log-body" id="logBody"></div>
+    <div class="mactions" style="margin-top:1.1rem">
+      <button class="btn-secondary" style="width:100%" onclick="closeModal('logModal')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="statsModal" onclick="overlayClick(event,'statsModal')">
+  <div class="modal-box">
+    <div class="modal-title">📊 Tableau de bord</div>
+    <div class="log-body" id="statsModalBody"></div>
+    <div class="mactions" style="margin-top:1.1rem">
+      <button class="btn-secondary" style="width:100%" onclick="closeModal('statsModal')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="plStatsModal" onclick="overlayClick(event,'plStatsModal')">
+  <div class="modal-box">
+    <div class="modal-title" id="plStatsTitle">📊 Statistiques</div>
+    <div class="log-body" id="plStatsBody"></div>
+    <div class="mactions" style="margin-top:1.1rem">
+      <button class="btn-secondary" style="width:100%" onclick="closeModal('plStatsModal')">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════
 // DATA LAYER — embarquée dans le fichier HTML
@@ -359,7 +555,15 @@ function loadDB() {
 }
 
 function saveDB() {
-  try { localStorage.setItem('ytvault_db', JSON.stringify(DB)); } catch(e) {}
+  try {
+    localStorage.setItem('ytvault_db', JSON.stringify(DB));
+    return true;
+  } catch(e) {
+    if (e && (e.name === 'QuotaExceededError' || /quota/i.test(e.message||''))) {
+      toast('⚠ Stockage local plein — pense à exporter une sauvegarde');
+    }
+    return false;
+  }
 }
 
 function saveHTMLFile() {
@@ -401,10 +605,37 @@ function openPlaylist(plId) {
   showPage('playlist-page');
   document.getElementById('searchInput').value = '';
   document.getElementById('filterSel').value = 'added_desc';
+  document.getElementById('showSel').value = 'all';
+  window._chanSel = {};
+  populateChannelFilter();
   renderVideos();
   updateMeta();
+  showRecap(pl);
   applyAutoSyncUI();
+  applyAutoplayUI();
   maybeAutoSyncOnOpen();
+}
+
+// "Depuis ta dernière visite" — summarise log entries since last open
+function showRecap(pl){
+  var banner = document.getElementById('recapBanner');
+  banner.style.display = 'none';
+  var lastSeen = pl.lastSeenAt ? new Date(pl.lastSeenAt).getTime() : 0;
+  if(lastSeen && pl.log && pl.log.length){
+    var since = pl.log.filter(function(e){ return new Date(e.at).getTime() > lastSeen; });
+    var added=0, dead=0, back=0;
+    since.forEach(function(e){ added+=(e.added||[]).length; dead+=(e.dead||[]).length; back+=(e.back||[]).length; });
+    if(added||dead||back){
+      var parts=[];
+      if(dead)  parts.push(dead+' disparue'+(dead>1?'s':''));
+      if(added) parts.push(added+' ajoutée'+(added>1?'s':''));
+      if(back)  parts.push(back+' réapparue'+(back>1?'s':''));
+      banner.innerHTML = '👋 Depuis ta dernière visite : <b>'+parts.join(' · ')+'</b> — voir le journal 📜';
+      banner.style.display = 'flex';
+    }
+  }
+  pl.lastSeenAt = new Date().toISOString();
+  saveDB();
 }
 
 function updateMeta() {
@@ -475,7 +706,50 @@ async function fetchYT(plId, onProg, onLog) {
     token = data.nextPageToken || '';
     page++;
   } while (token);
+
+  // Enrich alive videos with their duration (videos.list, 50 ids per call)
+  var aliveIds = items.filter(function(v){ return !v.deleted; }).map(function(v){ return v.id; });
+  if (aliveIds.length) {
+    onLog('Durées...');
+    var durMap = await fetchDurations(aliveIds, key);
+    items.forEach(function(v){ if(durMap[v.id]!=null) v.duration = durMap[v.id]; });
+  }
   return items;
+}
+
+function parseDuration(iso){
+  if(!iso) return 0;
+  var m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if(!m) return 0;
+  return (parseInt(m[1]||0,10)*3600) + (parseInt(m[2]||0,10)*60) + parseInt(m[3]||0,10);
+}
+async function fetchDurations(ids, key){
+  var map = {};
+  for(var i=0;i<ids.length;i+=50){
+    var batch = ids.slice(i,i+50);
+    var url = 'https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id='
+      + batch.join(',') + '&key=' + encodeURIComponent(key);
+    try{
+      var res = await fetch(url);
+      var data = await res.json();
+      if(data.items) data.items.forEach(function(it){
+        map[it.id] = parseDuration(it.contentDetails && it.contentDetails.duration);
+      });
+    }catch(e){}
+  }
+  return map;
+}
+function fmtDur(sec){
+  sec = Math.round(sec||0);
+  var h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+  function p(n){ return (n<10?'0':'')+n; }
+  return h>0 ? h+':'+p(m)+':'+p(s) : m+':'+p(s);
+}
+function fmtDurLong(sec){
+  sec = Math.round(sec||0);
+  var h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60);
+  if(h>0) return h+' h '+(m<10?'0':'')+m;
+  return m+' min';
 }
 
 // ══════════════════════════════════════════════
@@ -489,35 +763,56 @@ function openAddModal() {
   openModal('addModal');
 }
 
+async function fetchPlaylistTitle(plId, key){
+  try{
+    var url='https://www.googleapis.com/youtube/v3/playlists?part=snippet&id='+encodeURIComponent(plId)+'&key='+encodeURIComponent(key);
+    var res=await fetch(url); var data=await res.json();
+    if(data.items && data.items[0]) return data.items[0].snippet.title;
+  }catch(e){}
+  return '';
+}
+
 async function addPlaylist() {
-  var name = document.getElementById('newPlName').value.trim() || 'Ma Playlist';
+  var typedName = document.getElementById('newPlName').value.trim();
   var raw = document.getElementById('newPlUrl').value.trim();
   if (!raw) { setLog('addLog','URL manquante.','err'); return; }
   var k = document.getElementById('apiKeyInput').value.trim();
   if (k) { DB.apiKey = k; saveDB(); }
   if (!DB.apiKey) { setLog('addLog','Clé API manquante.','err'); return; }
-  var plId = extractPlId(raw);
+
+  var urls = raw.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);
+  var ids = urls.map(extractPlId).filter(Boolean);
+  if(!ids.length){ setLog('addLog','Aucune playlist valide détectée.','err'); return; }
+  var multi = ids.length > 1;
+
   document.getElementById('addBtn').disabled = true;
-  try {
-    setPbar(5);
-    var videos = await fetchYT(plId, function(p){ setPbar(p); }, function(m){ setLog('addLog',m,''); });
-    setPbar(95);
-    DB.playlists[plId] = { id:plId, name:name, videos:videos, lastSync:new Date().toISOString() };
-    saveDB();
-    setPbar(100);
-    setLog('addLog','✓ ' + videos.length + ' vidéos chargées !', 'ok');
-    setTimeout(function(){
-      closeModal('addModal');
-      setPbar(0);
-      renderHome();
-      document.getElementById('saveBanner').style.display = 'flex';
-      // auto-open the playlist
-      openPlaylist(plId);
-    }, 800);
-  } catch(e) {
-    setLog('addLog','Erreur : ' + e.message, 'err');
-    setPbar(0);
+  var ok=0, fail=0, lastId=null;
+  for(var n=0;n<ids.length;n++){
+    var plId = ids[n];
+    var prefix = multi ? ('['+(n+1)+'/'+ids.length+'] ') : '';
+    try{
+      setLog('addLog', prefix+'Chargement...', '');
+      var name = (!multi && typedName) ? typedName : (await fetchPlaylistTitle(plId, DB.apiKey) || ('Playlist '+(n+1)));
+      var videos = await fetchYT(plId, function(p){ setPbar(p); }, (function(px){ return function(m){ setLog('addLog', px+m, ''); }; })(prefix));
+      DB.playlists[plId] = Object.assign(DB.playlists[plId]||{}, { id:plId, name:name, videos:videos, lastSync:new Date().toISOString() });
+      saveDB();
+      ok++; lastId=plId;
+    }catch(e){
+      fail++;
+      setLog('addLog', prefix+'Échec : '+e.message, 'err');
+      await new Promise(function(r){ setTimeout(r, 900); });
+    }
   }
+  setPbar(100);
+  if(ok) setLog('addLog','✓ '+ok+' playlist'+(ok>1?'s':'')+' chargée'+(ok>1?'s':'')+(fail?(' · '+fail+' échec'+(fail>1?'s':'')):'')+' !', 'ok');
+  else   setLog('addLog','Aucune playlist chargée ('+fail+' échec'+(fail>1?'s':'')+').', 'err');
+  setTimeout(function(){
+    if(ok){
+      closeModal('addModal'); setPbar(0); renderHome();
+      document.getElementById('saveBanner').style.display = 'flex';
+      if(!multi && lastId) openPlaylist(lastId);
+    } else { setPbar(0); }
+  }, ok?900:1600);
   document.getElementById('addBtn').disabled = false;
 }
 
@@ -579,7 +874,7 @@ async function refreshCurrentPlaylist(opts) {
         return v;
       }
       if (old && !v.thumbnail && old.thumbnail) v.thumbnail = old.thumbnail;
-      return v;
+      return carryUserData(v, old); // keep favorites / watched / notes / cached thumb
     });
 
     Object.keys(oldMap).forEach(function(id) {
@@ -594,20 +889,35 @@ async function refreshCurrentPlaylist(opts) {
       }
     });
 
-    // Detect what changed (for the toast)
-    var addedCount = fresh.filter(function(v){ return !oldMap[v.id]; }).length;
-    var newlyDead  = merged.filter(function(v){ return v.deleted && oldMap[v.id] && !oldMap[v.id].deleted; }).length;
+    // Detect what changed
+    var addedTitles = fresh.filter(function(v){ return !oldMap[v.id]; }).map(function(v){ return v.title; });
+    var deadTitles  = merged.filter(function(v){ return v.deleted && oldMap[v.id] && !oldMap[v.id].deleted; }).map(function(v){ return v.title; });
+    var backTitles  = merged.filter(function(v){ return !v.deleted && oldMap[v.id] && oldMap[v.id].deleted; }).map(function(v){ return v.title; });
+    var addedCount = addedTitles.length, newlyDead = deadTitles.length, backCount = backTitles.length;
 
     pl.videos = merged;
     pl.lastSync = new Date().toISOString();
+
+    if (addedCount || newlyDead || backCount) {
+      if (!pl.log) pl.log = [];
+      pl.log.push({ at: new Date().toISOString(), added: addedTitles, dead: deadTitles, back: backTitles });
+      if (pl.log.length > 100) pl.log = pl.log.slice(-100);
+    }
+
     saveDB();
     renderVideos();
-
+    populateChannelFilter();
     var parts = [];
     if(addedCount) parts.push('+'+addedCount+' ajoutée'+(addedCount>1?'s':''));
     if(newlyDead)  parts.push(newlyDead+' devenue'+(newlyDead>1?'s':'')+' indisponible'+(newlyDead>1?'s':''));
+    if(backCount)  parts.push(backCount+' réapparue'+(backCount>1?'s':''));
     if(parts.length){ toast('↻ '+parts.join(' · ')); if(!silent) document.getElementById('saveBanner').style.display = 'flex'; }
     else if(!silent){ toast('↻ Déjà à jour'); }
+
+    // Cache thumbnails of unavailable videos so they survive YouTube purging them
+    cacheDeadThumbnails(pl).then(function(changed){
+      if(changed){ saveDB(); renderVideos(); }
+    });
   } catch(e) {
     if(!silent) document.getElementById('plHeaderMeta').textContent = 'Erreur : ' + e.message;
     else console.warn('Auto-sync échec :', e.message);
@@ -717,8 +1027,57 @@ function renderHome() {
 }
 
 function deletePlaylist(plId) {
-  if (!confirm('Supprimer cette playlist de la sauvegarde ?')) return;
+  var pl = DB.playlists[plId]; if(!pl) return;
+  if (!confirm('Supprimer « '+pl.name+' » de la sauvegarde ?')) return;
+  _lastDeleted = { id: plId, data: pl };
   delete DB.playlists[plId]; saveDB(); renderHome();
+  showUndo('🗑 « '+pl.name+' » supprimée', undoDelete);
+}
+var _lastDeleted = null;
+function undoDelete(){
+  if(!_lastDeleted) return;
+  DB.playlists[_lastDeleted.id] = _lastDeleted.data;
+  _lastDeleted = null;
+  saveDB(); renderHome();
+  toast('↩ Playlist restaurée');
+}
+
+// ── Theme (clair / sombre) ──
+function applyTheme(){
+  var light = !!(DB.settings && DB.settings.theme==='light');
+  document.documentElement.classList.toggle('light', light);
+  var b=document.getElementById('themeBtn'); if(b) b.textContent = light ? '☀️' : '🌙';
+}
+function toggleTheme(){
+  if(!DB.settings) DB.settings={};
+  DB.settings.theme = (DB.settings.theme==='light') ? 'dark' : 'light';
+  saveDB(); applyTheme();
+}
+
+// ── Manual ordering (drag & drop) ──
+function ensureManualOrder(pl){
+  if(!pl.manualOrder) pl.manualOrder = pl.videos.map(function(v){return v.id;});
+  var have={}; pl.manualOrder.forEach(function(id){have[id]=1;});
+  pl.videos.forEach(function(v){ if(!have[v.id]) pl.manualOrder.push(v.id); });
+  var present={}; pl.videos.forEach(function(v){present[v.id]=1;});
+  pl.manualOrder = pl.manualOrder.filter(function(id){return present[id];});
+}
+var _dragId=null;
+function dragStart(ev,id){ _dragId=id; try{ev.dataTransfer.effectAllowed='move';}catch(e){} }
+function dragOver(ev){ ev.preventDefault(); try{ev.dataTransfer.dropEffect='move';}catch(e){}
+  var c=ev.currentTarget; if(c && c.classList) c.classList.add('dragover'); }
+function dragLeave(ev){ var c=ev.currentTarget; if(c && c.classList) c.classList.remove('dragover'); }
+function dropOn(ev,targetId){
+  ev.preventDefault();
+  var c=ev.currentTarget; if(c && c.classList) c.classList.remove('dragover');
+  var pl=DB.playlists[currentPlId];
+  if(!pl || !_dragId || _dragId===targetId){ _dragId=null; return; }
+  ensureManualOrder(pl);
+  var order=pl.manualOrder.filter(function(id){return id!==_dragId;});
+  var ti=order.indexOf(targetId);
+  if(ti<0) order.push(_dragId); else order.splice(ti,0,_dragId);
+  pl.manualOrder=order; _dragId=null; saveDB(); renderVideos();
+  toast('✋ Ordre mis à jour');
 }
 
 // ══════════════════════════════════════════════
@@ -727,8 +1086,81 @@ function deletePlaylist(plId) {
 function smartMatch(v, query) {
   if (!query) return true;
   var words = query.toLowerCase().split(/\s+/).filter(Boolean);
-  var hay = ((v.title||'') + ' ' + (v.channel||'')).toLowerCase();
+  var hay = ((v.title||'') + ' ' + (v.channel||'') + ' ' + (v.note||'')).toLowerCase();
   return words.every(function(w){ return hay.includes(w); });
+}
+
+// ══════════════════════════════════════════════
+// USER DATA (favoris / vu / notes) + ARCHIVAGE
+// ══════════════════════════════════════════════
+function carryUserData(target, src){
+  if(!src) return target;
+  if(src.fav)      target.fav = true;
+  if(src.watched)  target.watched = true;
+  if(src.note)     target.note = src.note;
+  if(src.thumbB64) target.thumbB64 = src.thumbB64;
+  if(src.duration) target.duration = src.duration;
+  if(src.playCount)    target.playCount = src.playCount;
+  if(src.watchSeconds) target.watchSeconds = src.watchSeconds;
+  if(src.lastPlayedAt) target.lastPlayedAt = src.lastPlayedAt;
+  return target;
+}
+
+// Cache thumbnails of unavailable videos as base64 so they're preserved forever
+async function cacheDeadThumbnails(pl){
+  var targets = pl.videos.filter(function(v){ return v.deleted && v.thumbnail && !v.thumbB64; });
+  if(!targets.length) return false;
+  var changed = false;
+  for(var i=0;i<targets.length;i++){
+    try{
+      var r = await loadThumb(targets[i].thumbnail);
+      if(r && r.data){ targets[i].thumbB64 = r.data; changed = true; }
+    }catch(e){}
+  }
+  return changed;
+}
+
+function _findV(id, plId){
+  plId = plId || currentPlId;
+  var pl = DB.playlists[plId];
+  if(!pl) return null;
+  for(var i=0;i<pl.videos.length;i++){ if(pl.videos[i].id===id) return pl.videos[i]; }
+  return null;
+}
+// Re-render whichever view is currently visible
+function rerender(){
+  if(document.getElementById('all-page').classList.contains('active')) renderAllVideos();
+  else if(document.getElementById('playlist-page').classList.contains('active')) renderVideos();
+}
+function toggleFav(id, plId){ var v=_findV(id, plId); if(!v) return; v.fav=!v.fav; saveDB(); rerender(); }
+function toggleWatched(id, plId){ var v=_findV(id, plId); if(!v) return; v.watched=!v.watched; saveDB(); rerender(); }
+function editNote(id, plId){
+  var v=_findV(id, plId); if(!v) return;
+  var n=prompt('Note personnelle pour « '+(v.title||'cette vidéo')+' » :', v.note||'');
+  if(n===null) return;
+  v.note=n.trim(); saveDB(); rerender();
+  toast(v.note ? '📝 Note enregistrée' : '📝 Note supprimée');
+}
+
+// ── Journal d'évolution ──
+function listTitles(arr){
+  return '<ul class="log-titles">'
+    + arr.slice(0,8).map(function(t){ return '<li>'+esc(t||'(sans titre)')+'</li>'; }).join('')
+    + (arr.length>8 ? '<li>… et '+(arr.length-8)+' de plus</li>' : '')
+    + '</ul>';
+}
+function openLogModal(){
+  var pl=DB.playlists[currentPlId]; if(!pl) return;
+  var log=(pl.log||[]).slice().reverse();
+  var html = log.length ? log.map(function(e){
+    var parts=[];
+    if(e.added&&e.added.length) parts.push('<div class="log-line add">＋ '+e.added.length+' ajoutée'+(e.added.length>1?'s':'')+listTitles(e.added)+'</div>');
+    if(e.dead&&e.dead.length)   parts.push('<div class="log-line dead">⚠ '+e.dead.length+' devenue'+(e.dead.length>1?'s':'')+' indisponible'+(e.dead.length>1?'s':'')+listTitles(e.dead)+'</div>');
+    if(e.back&&e.back.length)   parts.push('<div class="log-line back">↩ '+e.back.length+' réapparue'+(e.back.length>1?'s':'')+listTitles(e.back)+'</div>');
+    return '<div class="log-entry"><div class="log-date">'+new Date(e.at).toLocaleString('fr-FR')+'</div>'+parts.join('')+'</div>';
+  }).join('') : '<div class="no-result">Aucun changement enregistré pour l\'instant.<br>Le journal se remplit à chaque synchronisation détectant un changement.</div>';
+  document.getElementById('logBody').innerHTML=html;
+  openModal('logModal');
 }
 
 // ══════════════════════════════════════════════
@@ -740,67 +1172,325 @@ function renderVideos() {
   var pl = DB.playlists[currentPlId]; if (!pl) return;
   var q = document.getElementById('searchInput').value.trim();
   var f = document.getElementById('filterSel').value;
+  var show = (document.getElementById('showSel')||{}).value || 'all';
+  var selChans = Object.keys(window._chanSel||{});
 
-  var vids = pl.videos.filter(function(v){ return smartMatch(v, q); }).slice().sort(function(a,b){
-    if (f==='added_desc') return new Date(b.addedAt||0)-new Date(a.addedAt||0);
-    if (f==='added_asc')  return new Date(a.addedAt||0)-new Date(b.addedAt||0);
-    if (f==='published_desc') return new Date(b.publishedAt||b.addedAt||0)-new Date(a.publishedAt||a.addedAt||0);
-    if (f==='published_asc')  return new Date(a.publishedAt||a.addedAt||0)-new Date(b.publishedAt||b.addedAt||0);
-    return 0;
+  var vids = pl.videos.filter(function(v){ return smartMatch(v, q); });
+  vids = vids.filter(function(v){
+    if(show==='dead')      return v.deleted;
+    if(show==='fav')       return v.fav;
+    if(show==='watched')   return v.watched;
+    if(show==='unwatched') return !v.watched;
+    return true;
   });
+  if(selChans.length) vids = vids.filter(function(v){ return window._chanSel[v.channel||'']; });
+
+  var manualDrag = false;
+  if(f==='manual'){
+    ensureManualOrder(pl);
+    var oi={}; pl.manualOrder.forEach(function(id,i){ oi[id]=i; });
+    vids = vids.slice().sort(function(a,b){
+      var ai=(oi[a.id]==null?1e9:oi[a.id]), bi=(oi[b.id]==null?1e9:oi[b.id]);
+      return ai-bi;
+    });
+    manualDrag = !q && show==='all' && !selChans.length; // dragging only on the full list
+  } else {
+    vids = vids.slice().sort(sorter(f));
+  }
 
   window._cv = vids;
 
   var total=pl.videos.length, dead=pl.videos.filter(function(v){return v.deleted;}).length;
+  var favN=pl.videos.filter(function(v){return v.fav;}).length;
   var chans=new Set(pl.videos.filter(function(v){return !v.deleted&&v.channel;}).map(function(v){return v.channel;})).size;
+  var totalSec=pl.videos.reduce(function(a,v){return a+(v.duration||0);},0);
   document.getElementById('statsBar').innerHTML =
     '<span><b>'+total+'</b> vidéos</span><span><b>'+chans+'</b> chaînes</span>'
-    +(dead?'<span class="dc"><b>'+dead+'</b> indisponibles</span>':'')
-    +(q?'<span><b>'+vids.length+'</b> résultats</span>':'');
+    +(totalSec?'<span>⏱ '+fmtDurLong(totalSec)+'</span>':'')
+    +(favN?'<span class="chip" onclick="setShow(\'fav\')"><b>'+favN+'</b> ★</span>':'')
+    +(dead?'<span class="chip dc" onclick="setShow(\'dead\')"><b>'+dead+'</b> indisponibles</span>':'')
+    +(selChans.length?'<span class="chip act" onclick="clearChan()">📺 '+selChans.length+' chaîne'+(selChans.length>1?'s':'')+' ✕</span>':'')
+    +(f==='manual'?(manualDrag?'<span class="hint-chip">✋ glisse les cartes pour réordonner</span>':'<span class="hint-chip">✋ retire recherche/filtres pour glisser</span>'):'')
+    +((q||show!=='all'||selChans.length)?'<span><b>'+vids.length+'</b> affichées</span>':'');
 
   var grid = document.getElementById('videoGrid');
-  if (!vids.length) { grid.innerHTML='<div class="no-result">Aucune vidéo trouvée.<br>Essayez d\'autres mots-clés.</div>'; return; }
+  if (!vids.length) { grid.innerHTML='<div class="no-result">Aucune vidéo trouvée.<br>Essaie d\'autres mots-clés ou un autre filtre.</div>'; markPlayingCard(); updateJumpFab(); return; }
 
   var html = '';
   for (var i=0; i<vids.length; i++) {
-    var v = vids[i];
-    var idx = i;
-    var addFmt = v.addedAt ? new Date(v.addedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}) : '';
-    var chanUrl = v.channelId
-      ? 'https://www.youtube.com/channel/'+v.channelId
-      : 'https://www.youtube.com/results?search_query='+encodeURIComponent(v.channel||'');
-    var thumb = v.thumbnail
-      ? '<img src="'+v.thumbnail+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
-      : '<div class="nothumb">🎬</div>';
-    var kindLabel = v.deletedKind==='private' ? 'Privée' : 'Supprimée';
-    var kindIcon  = v.deletedKind==='private' ? '🔒' : '🚫';
-    var since = v.deleted ? fmtD(v.deletedAt) : '';
-    var cornerFlag = v.deleted
-      ? '<span class="corner-flag'+(v.deletedKind==='private'?' priv':'')+'">'+kindIcon+' '+kindLabel+'</span>'
-      : '';
-    var deadOv = v.deleted
-      ? '<div class="dead-ov"><div class="dead-box"><span class="dead-tag">'+kindLabel+'</span>'
-        +'<span class="dead-since">'+(since?('depuis le '+since):'date inconnue')+'</span>'
-        +'</div></div>'
-      : '';
-    var playBtn = !v.deleted
-      ? '<button class="vbtn play" onclick="playIdx('+idx+')">▶ Lire</button>'
-      : '';
-    html += '<div class="vcard'+(v.deleted?' dead':'')+(v.id===window._playingId?' playing':'')+'" data-vid="'+esc(v.id)+'">'
-      +'<div class="vthumb" onclick="'+(v.deleted?'':'playIdx('+idx+')')+'"><div style="width:100%;height:100%;position:relative">'+thumb+'</div>'
-      +cornerFlag
-      +(v.deleted?deadOv:'<div class="play-ov"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>')
-      +'</div>'
-      +'<div class="vinfo">'
-      +'<div class="vnum">#'+String(i+1).padStart(3,'0')+(addFmt?' · Ajouté le '+addFmt:'')+'</div>'
-      +'<div class="vtitle">'+esc(v.title||'')+'</div>'
-      +'<div class="vchan">📺 <a href="'+chanUrl+'" target="_blank">'+esc(v.channel||'—')+'</a></div>'
-      +'<div class="vactions">'+playBtn+'<a class="vbtn yt" href="'+v.url+'" target="_blank">↗ YouTube</a></div>'
-      +'</div></div>';
+    html += cardHTML(vids[i], i+1, { plId: currentPlId, playAttr: 'playIdx('+i+')', draggable: manualDrag });
   }
   grid.innerHTML = html;
   markPlayingCard();
   updateJumpFab();
+}
+
+function sorter(f){
+  return function(a,b){
+    if (f==='added_desc') return new Date(b.addedAt||0)-new Date(a.addedAt||0);
+    if (f==='added_asc')  return new Date(a.addedAt||0)-new Date(b.addedAt||0);
+    if (f==='published_desc') return new Date(b.publishedAt||b.addedAt||0)-new Date(a.publishedAt||a.addedAt||0);
+    if (f==='published_asc')  return new Date(a.publishedAt||a.addedAt||0)-new Date(b.publishedAt||b.addedAt||0);
+    if (f==='deleted_desc')   return new Date(b.deletedAt||0)-new Date(a.deletedAt||0);
+    if (f==='duration_desc')  return (b.duration||0)-(a.duration||0);
+    if (f==='duration_asc')   return (a.duration||0)-(b.duration||0);
+    return 0;
+  };
+}
+function clearChan(){ window._chanSel={}; populateChannelFilter(); renderVideos(); }
+window._chanSel = {}; // selected channels (channel name -> true); empty = all
+function populateChannelFilter(){
+  var menu=document.getElementById('chanMenu'); if(!menu) return;
+  var pl=DB.playlists[currentPlId];
+  var chans = pl ? Array.from(new Set(pl.videos.filter(function(v){return v.channel;}).map(function(v){return v.channel;}))).sort(function(a,b){return a.localeCompare(b);}) : [];
+  // drop selections that no longer exist
+  Object.keys(window._chanSel).forEach(function(c){ if(chans.indexOf(c)<0) delete window._chanSel[c]; });
+  var items = chans.map(function(c){
+    return '<label class="ms-item"><input type="checkbox" '+(window._chanSel[c]?'checked':'')+' onchange="onChanCheck(this)" data-ch="'+esc(c)+'"><span>'+esc(c)+'</span></label>';
+  }).join('') || '<div class="ms-empty">Aucune chaîne</div>';
+  menu.innerHTML = '<div class="ms-actions"><button type="button" onclick="chanAll(true)">Tout</button><button type="button" onclick="chanAll(false)">Aucun</button></div>'+items;
+  updateChanLabel();
+}
+function onChanCheck(cb){
+  var c=cb.getAttribute('data-ch');
+  if(cb.checked) window._chanSel[c]=true; else delete window._chanSel[c];
+  updateChanLabel(); renderVideos();
+}
+function chanAll(on){
+  var pl=DB.playlists[currentPlId];
+  window._chanSel={};
+  if(on && pl){ pl.videos.forEach(function(v){ if(v.channel) window._chanSel[v.channel]=true; }); }
+  populateChannelFilter(); renderVideos();
+}
+function updateChanLabel(){
+  var n=Object.keys(window._chanSel).length;
+  var t=document.getElementById('chanToggle'); if(!t) return;
+  t.textContent = (n===0 ? 'Toutes les chaînes' : n+' chaîne'+(n>1?'s':''))+' ▾';
+  t.classList.toggle('active', n>0);
+}
+function toggleChanMenu(e){ e.stopPropagation(); document.getElementById('chanMenu').classList.toggle('open'); }
+document.addEventListener('click', function(e){
+  var w=document.getElementById('chanFilter');
+  if(w && !w.contains(e.target)){ var m=document.getElementById('chanMenu'); if(m) m.classList.remove('open'); }
+});
+
+// Unified card builder — used by both the playlist view and the global view
+function cardHTML(v, num, opts){
+  opts = opts || {};
+  var plId = opts.plId || currentPlId;
+  var uid = esc(v.id);
+  var pid = esc(plId);
+  var addFmt = v.addedAt ? new Date(v.addedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}) : '';
+  var chanUrl = v.channelId
+    ? 'https://www.youtube.com/channel/'+v.channelId
+    : 'https://www.youtube.com/results?search_query='+encodeURIComponent(v.channel||'');
+  var thumbSrc = (v.deleted && v.thumbB64) ? v.thumbB64 : v.thumbnail;
+  var thumb = thumbSrc
+    ? '<img src="'+thumbSrc+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
+    : '<div class="nothumb">🎬</div>';
+  var kindLabel = v.deletedKind==='private' ? 'Privée' : 'Supprimée';
+  var kindIcon  = v.deletedKind==='private' ? '🔒' : '🚫';
+  var since = v.deleted ? fmtD(v.deletedAt) : '';
+  var cornerFlag = v.deleted
+    ? '<span class="corner-flag'+(v.deletedKind==='private'?' priv':'')+'">'+kindIcon+' '+kindLabel+'</span>'
+    : '';
+  var deadOv = v.deleted
+    ? '<div class="dead-ov"><div class="dead-box"><span class="dead-tag">'+kindLabel+'</span><span class="dead-since">'+(since?('depuis le '+since):'date inconnue')+'</span></div></div>'
+    : '';
+  var pa = opts.playAttr || '';
+  var sp = 'event.stopPropagation();';
+  var thumbActions = '<div class="thumb-actions">'
+    +'<button class="tact'+(v.fav?' on':'')+'" onclick="'+sp+'toggleFav(\''+uid+'\',\''+pid+'\')" title="Favori">★</button>'
+    +'<button class="tact watch'+(v.watched?' on':'')+'" onclick="'+sp+'toggleWatched(\''+uid+'\',\''+pid+'\')" title="Déjà vu">👁</button>'
+    +'<button class="tact'+(v.note?' on':'')+'" onclick="'+sp+'editNote(\''+uid+'\',\''+pid+'\')" title="Note">📝</button>'
+    +'</div>';
+  var durBadge = (!v.deleted && v.duration) ? '<span class="dur-badge">'+fmtDur(v.duration)+'</span>' : '';
+  var recovery = v.deleted
+    ? '<a class="vbtn rec" href="https://web.archive.org/web/*/'+v.url+'" target="_blank" rel="noopener" title="Chercher une archive de la page">🏛</a>'
+      +'<a class="vbtn rec" href="https://www.google.com/search?q='+encodeURIComponent((v.title||'')+' youtube')+'" target="_blank" rel="noopener" title="Rechercher une éventuelle réupload">🔎</a>'
+    : '';
+  var playBtn = (!v.deleted && pa) ? '<button class="vbtn play" onclick="'+pa+'">▶ Lire</button>' : '';
+  var noteRow = v.note ? '<div class="vnote">📝 '+esc(v.note)+'</div>' : '';
+  var badge = opts.badge ? '<span class="pl-badge">'+opts.badge+'</span>' : '';
+  var numLabel = num ? '#'+String(num).padStart(3,'0') : '';
+  var bits = [];
+  if(badge) bits.push(badge);
+  if(numLabel) bits.push(numLabel);
+  if(addFmt) bits.push(addFmt);
+  if((v.playCount||0)>0) bits.push('<span class="views">▶ '+v.playCount+' vue'+(v.playCount>1?'s':'')+'</span>');
+  var metaLine = bits.join(' · ');
+  var dragAttrs = opts.draggable
+    ? ' draggable="true" ondragstart="dragStart(event,\''+uid+'\')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOn(event,\''+uid+'\')"'
+    : '';
+  return '<div class="vcard'+(v.deleted?' dead':'')+(v.watched?' watched':'')+(v.fav?' fav':'')+(opts.draggable?' draggable-card':'')+(v.id===window._playingId?' playing':'')+'" data-vid="'+uid+'"'+dragAttrs+'>'
+    +'<div class="vthumb" onclick="'+(v.deleted?'':pa)+'"><div style="width:100%;height:100%;position:relative">'+thumb+'</div>'
+    +cornerFlag
+    +(v.deleted?deadOv:'<div class="play-ov"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>')
+    +durBadge+thumbActions
+    +'</div>'
+    +'<div class="vinfo">'
+    +'<div class="vnum">'+metaLine+'</div>'
+    +'<div class="vtitle">'+esc(v.title||'')+'</div>'
+    +'<div class="vchan">📺 <a href="'+chanUrl+'" target="_blank">'+esc(v.channel||'—')+'</a></div>'
+    +noteRow
+    +'<div class="vactions">'+playBtn+'<a class="vbtn yt" href="'+v.url+'" target="_blank">↗ YouTube</a>'+recovery+'</div>'
+    +'</div></div>';
+}
+
+function setShow(val){
+  var sel=document.getElementById('showSel'); if(!sel) return;
+  sel.value = (sel.value===val ? 'all' : val);
+  if(val==='dead' && sel.value==='dead'){ document.getElementById('filterSel').value='deleted_desc'; }
+  renderVideos();
+}
+
+// ══════════════════════════════════════════════
+// VUE TRANSVERSALE — toutes les vidéos
+// ══════════════════════════════════════════════
+function openAllVideos(){
+  clearAutoSync(); closePlayer();
+  showPage('all-page');
+  document.getElementById('allSearch').value='';
+  document.getElementById('allShowSel').value='all';
+  renderAllVideos();
+}
+function allSetShow(val){ var s=document.getElementById('allShowSel'); s.value=(s.value===val?'all':val); renderAllVideos(); }
+function renderAllVideos(){
+  var q=document.getElementById('allSearch').value.trim();
+  var show=document.getElementById('allShowSel').value;
+  var all=[];
+  Object.keys(DB.playlists).forEach(function(pid){
+    var pl=DB.playlists[pid];
+    pl.videos.forEach(function(v){ all.push({v:v, plId:pid, plName:pl.name}); });
+  });
+  var idCount={};
+  all.forEach(function(o){ idCount[o.v.id]=(idCount[o.v.id]||0)+1; });
+  var list=all.filter(function(o){ return smartMatch(o.v, q); });
+  list=list.filter(function(o){
+    if(show==='dead')    return o.v.deleted;
+    if(show==='fav')     return o.v.fav;
+    if(show==='watched') return o.v.watched;
+    if(show==='dupes')   return idCount[o.v.id]>1;
+    return true;
+  });
+  list.sort(function(a,b){ return new Date(b.v.addedAt||0)-new Date(a.v.addedAt||0); });
+
+  var dupes=Object.keys(idCount).filter(function(k){return idCount[k]>1;}).length;
+  document.getElementById('allStats').innerHTML =
+    '<span><b>'+Object.keys(DB.playlists).length+'</b> playlists</span>'
+    +'<span><b>'+all.length+'</b> vidéos</span>'
+    +(dupes?'<span class="chip" onclick="allSetShow(\'dupes\')"><b>'+dupes+'</b> en doublon</span>':'')
+    +'<span><b>'+list.length+'</b> affichées</span>';
+
+  var grid=document.getElementById('allGrid');
+  if(!list.length){ grid.innerHTML='<div class="no-result">Aucune vidéo.<br>Ajoute des playlists ou change le filtre.</div>'; return; }
+  var html='';
+  for(var i=0;i<list.length;i++){
+    var o=list[i];
+    var badge=esc(o.plName)+(idCount[o.v.id]>1?' ×'+idCount[o.v.id]:'');
+    html += cardHTML(o.v, 0, { plId:o.plId, playAttr:'playGlobal(\''+esc(o.plId)+'\',\''+esc(o.v.id)+'\')', badge:badge });
+  }
+  grid.innerHTML=html;
+}
+function playGlobal(plId, id){
+  openPlaylist(plId);
+  var idx=-1;
+  for(var i=0;i<window._cv.length;i++){ if(window._cv[i].id===id){ idx=i; break; } }
+  if(idx>=0) playIdx(idx);
+  else { var v=_findV(id, plId); if(v && v.url) window.open(v.url,'_blank'); }
+}
+
+// ══════════════════════════════════════════════
+// TABLEAU DE BORD STATS
+// ══════════════════════════════════════════════
+function openStatsModal(){
+  var pls=Object.keys(DB.playlists).map(function(k){return DB.playlists[k];});
+  var totalV=0, totalDead=0, totalSec=0, chanCount={};
+  pls.forEach(function(pl){
+    pl.videos.forEach(function(v){
+      totalV++; if(v.deleted) totalDead++; totalSec+=v.duration||0;
+      if(v.channel && !v.deleted) chanCount[v.channel]=(chanCount[v.channel]||0)+1;
+    });
+  });
+  var topChans=Object.keys(chanCount).map(function(c){return {c:c,n:chanCount[c]};}).sort(function(a,b){return b.n-a.n;}).slice(0,6);
+  var maxPl=Math.max.apply(null, pls.map(function(p){return p.videos.length;}).concat([1]));
+  var bars=pls.slice().sort(function(a,b){return b.videos.length-a.videos.length;}).map(function(p){
+    var w=Math.round(p.videos.length/maxPl*100);
+    return '<div class="stat-bar"><div class="stat-bar-label" title="'+esc(p.name)+'">'+esc(p.name)+'</div>'
+      +'<div class="stat-bar-track"><div class="stat-bar-fill" style="width:'+w+'%"></div></div>'
+      +'<div class="stat-bar-val">'+p.videos.length+'</div></div>';
+  }).join('');
+  var topHtml=topChans.map(function(t){return '<li><span>'+esc(t.c)+'</span><b>'+t.n+'</b></li>';}).join('');
+  var allVideos=[]; pls.forEach(function(p){ p.videos.forEach(function(v){ allVideos.push(v); }); });
+  document.getElementById('statsModalBody').innerHTML =
+    '<div class="stat-grid">'
+    +'<div class="stat-card"><div class="stat-num">'+pls.length+'</div><div class="stat-lbl">playlists</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+totalV+'</div><div class="stat-lbl">vidéos</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+totalDead+'</div><div class="stat-lbl">indisponibles</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+fmtDurLong(totalSec)+'</div><div class="stat-lbl">durée totale</div></div>'
+    +'</div>'
+    +'<div class="stat-section">Ton visionnage <span class="stat-hint">(temps passé dans le lecteur du site)</span></div>'
+    + viewingHTML(allVideos)
+    +(bars?'<div class="stat-section">Vidéos par playlist</div><div class="stat-bars">'+bars+'</div>':'')
+    +(topHtml?'<div class="stat-section">Top chaînes</div><ul class="top-chans">'+topHtml+'</ul>':'');
+  openModal('statsModal');
+}
+
+// ── Viewing stats (user-specific, local) ──
+function viewingStats(videos){
+  var totalWatch=0, played=0, watchedFlag=0;
+  var mostPlayed=null, mostWatched=null, lastPlayed=null;
+  videos.forEach(function(v){
+    totalWatch += v.watchSeconds||0;
+    if((v.playCount||0)>0) played++;
+    if(v.watched) watchedFlag++;
+    if((v.playCount||0)>0 && (!mostPlayed || (v.playCount||0)>(mostPlayed.playCount||0))) mostPlayed=v;
+    if((v.watchSeconds||0)>0 && (!mostWatched || (v.watchSeconds||0)>(mostWatched.watchSeconds||0))) mostWatched=v;
+    if(v.lastPlayedAt && (!lastPlayed || new Date(v.lastPlayedAt)>new Date(lastPlayed.lastPlayedAt))) lastPlayed=v;
+  });
+  return {totalWatch:totalWatch, played:played, watchedFlag:watchedFlag, mostPlayed:mostPlayed, mostWatched:mostWatched, lastPlayed:lastPlayed, count:videos.length};
+}
+function viewingHTML(videos){
+  var s=viewingStats(videos);
+  var pct = s.count ? Math.round((s.played/s.count)*100) : 0;
+  function vline(label, v, extra){
+    return '<li><span>'+label+'<br><span class="vs-title">'+esc(v.title||'')+'</span></span><b>'+extra+'</b></li>';
+  }
+  var lines='';
+  if(s.mostPlayed)  lines+=vline('▶ La plus vue', s.mostPlayed, (s.mostPlayed.playCount||0)+' vue'+((s.mostPlayed.playCount||0)>1?'s':''));
+  if(s.mostWatched) lines+=vline('⏱ La plus regardée', s.mostWatched, fmtDur(s.mostWatched.watchSeconds||0));
+  if(s.lastPlayed)  lines+=vline('🕒 Vue en dernier', s.lastPlayed, fmtD(s.lastPlayed.lastPlayedAt));
+  if(!lines) lines='<li><span>Lance une vidéo pour commencer à mesurer ton visionnage.</span><b>—</b></li>';
+  return '<div class="stat-grid">'
+    +'<div class="stat-card"><div class="stat-num">'+fmtDurLong(s.totalWatch)+'</div><div class="stat-lbl">temps de visionnage</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+s.played+'</div><div class="stat-lbl">vidéos lancées</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+pct+'%</div><div class="stat-lbl">playlist parcourue</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+s.watchedFlag+'</div><div class="stat-lbl">marquées vues</div></div>'
+    +'</div>'
+    +'<ul class="top-chans vs-list">'+lines+'</ul>';
+}
+
+// ── Per-playlist stats ──
+function openPlaylistStats(){
+  var pl=DB.playlists[currentPlId]; if(!pl) return;
+  var videos=pl.videos;
+  var dead=videos.filter(function(v){return v.deleted;}).length;
+  var totalSec=videos.reduce(function(a,v){return a+(v.duration||0);},0);
+  var chanCount={}; videos.forEach(function(v){ if(v.channel&&!v.deleted) chanCount[v.channel]=(chanCount[v.channel]||0)+1; });
+  var topChans=Object.keys(chanCount).map(function(c){return {c:c,n:chanCount[c]};}).sort(function(a,b){return b.n-a.n;}).slice(0,6);
+  var topHtml=topChans.map(function(t){return '<li><span>'+esc(t.c)+'</span><b>'+t.n+'</b></li>';}).join('');
+  document.getElementById('plStatsTitle').textContent='📊 '+pl.name;
+  document.getElementById('plStatsBody').innerHTML =
+    '<div class="stat-grid">'
+    +'<div class="stat-card"><div class="stat-num">'+videos.length+'</div><div class="stat-lbl">vidéos</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+dead+'</div><div class="stat-lbl">indisponibles</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+fmtDurLong(totalSec)+'</div><div class="stat-lbl">durée du contenu</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+Object.keys(chanCount).length+'</div><div class="stat-lbl">chaînes</div></div>'
+    +'</div>'
+    +'<div class="stat-section">Ton visionnage <span class="stat-hint">(temps passé dans le lecteur du site)</span></div>'
+    + viewingHTML(videos)
+    + (topHtml?'<div class="stat-section">Top chaînes</div><ul class="top-chans">'+topHtml+'</ul>':'');
+  openModal('plStatsModal');
 }
 
 // ══════════════════════════════════════════════
@@ -826,12 +1516,79 @@ function playIdx(i) {
   iframe.src = 'https://www.youtube-nocookie.com/embed/' + v.id + '?autoplay=1&rel=0';
 
   window._playingId = v.id;
+  window._playIndex = i;
+  v.playCount = (v.playCount||0) + 1;
+  v.lastPlayedAt = new Date().toISOString();
+  watchStart(currentPlId, v.id);
+  saveDB();
   markPlayingCard();
+  scheduleAutoplay(v);
 
   wrap.classList.add('open');
   wrap.scrollIntoView({behavior:'smooth', block:'start'});
   updateJumpFab();
 }
+
+// ── Prev / Next / Autoplay (duration-based, no YouTube JS API → no error 153) ──
+var _autoplayTimer = null;
+function applyAutoplayUI(){
+  var b=document.getElementById('autoplayBtn'); if(!b) return;
+  var on = !!(DB.settings && DB.settings.autoplay);
+  b.classList.toggle('on', on);
+}
+function toggleAutoplay(){
+  if(!DB.settings) DB.settings={};
+  DB.settings.autoplay = !DB.settings.autoplay;
+  saveDB(); applyAutoplayUI();
+  toast(DB.settings.autoplay ? '🔁 Autoplay activé (avance selon la durée de la vidéo)' : '🔁 Autoplay désactivé');
+  if(DB.settings.autoplay && window._playingId){ var v=_findV(window._playingId, currentPlId); if(v) scheduleAutoplay(v); }
+  else clearAutoplay();
+}
+function clearAutoplay(){ if(_autoplayTimer){ clearTimeout(_autoplayTimer); _autoplayTimer=null; } }
+function scheduleAutoplay(v){
+  clearAutoplay();
+  if(!(DB.settings && DB.settings.autoplay)) return;
+  if(!v || !v.duration) return; // need a known duration
+  _autoplayTimer = setTimeout(function(){ playNext(true); }, (v.duration + 2) * 1000);
+}
+function playNext(auto){
+  if(typeof window._playIndex !== 'number') return;
+  for(var i=window._playIndex+1; i<window._cv.length; i++){
+    if(!window._cv[i].deleted){ playIdx(i); return; }
+  }
+  if(auto) toast('Fin de la liste');
+}
+function playPrev(){
+  if(typeof window._playIndex !== 'number') return;
+  for(var i=window._playIndex-1; i>=0; i--){
+    if(!window._cv[i].deleted){ playIdx(i); return; }
+  }
+}
+
+// ── Viewing-time tracking (time the player is open & tab visible) ──
+window._watch = null; // { plId, id, start }
+function watchStart(plId, id){
+  watchAccrue();
+  window._watch = { plId:plId, id:id, start: document.hidden ? null : Date.now() };
+}
+function watchAccrue(){
+  var w = window._watch; if(!w || !w.start) return;
+  var el = (Date.now() - w.start) / 1000;
+  w.start = Date.now();
+  if(el > 0 && el < 21600){ // ignore implausible gaps (sleep, >6h)
+    var v = _findV(w.id, w.plId);
+    if(v) v.watchSeconds = (v.watchSeconds||0) + el;
+  }
+}
+function watchStop(){ watchAccrue(); window._watch = null; }
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden){ watchAccrue(); if(window._watch) window._watch.start = null; }
+  else if(window._watch && document.getElementById('playerWrap').classList.contains('open')){
+    window._watch.start = Date.now();
+  }
+});
+setInterval(function(){ if(window._watch && window._watch.start){ watchAccrue(); saveDB(); } }, 15000);
+window.addEventListener('beforeunload', function(){ watchStop(); saveDB(); });
 
 function markPlayingCard(){
   document.querySelectorAll('.vcard.playing').forEach(function(c){ c.classList.remove('playing'); });
@@ -898,13 +1655,38 @@ window.addEventListener('message', function(e) {
 });
 
 function closePlayer() {
+  clearAutoplay();
+  watchStop();
+  saveDB();
   var wrap = document.getElementById('playerWrap');
   wrap.classList.remove('open');
   document.getElementById('playerIframe').src = '';
   window._playingId = null;
+  window._playIndex = null;
   markPlayingCard();
   updateJumpFab();
 }
+
+// ── Keyboard shortcuts ──
+document.addEventListener('keydown', function(e){
+  var tag = (e.target && e.target.tagName) || '';
+  var typing = tag==='INPUT' || tag==='TEXTAREA' || e.target.isContentEditable;
+  if(e.key === '/' && !typing){
+    var onAll = document.getElementById('all-page').classList.contains('active');
+    var onPl  = document.getElementById('playlist-page').classList.contains('active');
+    if(onAll || onPl){
+      var s = onAll ? document.getElementById('allSearch') : document.getElementById('searchInput');
+      if(s){ e.preventDefault(); s.focus(); }
+    }
+    return;
+  }
+  if(typing) return;
+  var playerOpen = document.getElementById('playerWrap').classList.contains('open');
+  if(e.key === 'Escape'){ if(playerOpen) closePlayer(); return; }
+  if(!playerOpen) return;
+  if(e.key === 'ArrowRight' || e.key === 'n' || e.key === 'N'){ e.preventDefault(); playNext(); }
+  else if(e.key === 'ArrowLeft' || e.key === 'p' || e.key === 'P'){ e.preventDefault(); playPrev(); }
+});
 
 // ══════════════════════════════════════════════
 // EXPORTS
@@ -1125,6 +1907,13 @@ function toast(msg){
   el.textContent=msg; el.classList.add('show');
   clearTimeout(_toastT); _toastT=setTimeout(function(){ el.classList.remove('show'); }, 3200);
 }
+function showUndo(msg, fn){
+  var el=document.getElementById('toast'); if(!el) return;
+  el.innerHTML = esc(msg)+' <button class="toast-undo">Annuler</button>';
+  el.querySelector('.toast-undo').onclick=function(){ fn(); el.classList.remove('show'); };
+  el.classList.add('show');
+  clearTimeout(_toastT); _toastT=setTimeout(function(){ el.classList.remove('show'); }, 6500);
+}
 function dl(blob,name){ var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click(); }
 function today(){ return new Date().toISOString().slice(0,10); }
 function slug(s){ return String(s||'file').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
@@ -1138,6 +1927,7 @@ function overlayClick(e,id){ if(e.target===document.getElementById(id)) closeMod
 window.addEventListener('DOMContentLoaded', function(){
   loadDB();
   if(!DB.settings) DB.settings = { autoSync:true };
+  applyTheme();
   renderHome();
 });
 </script>

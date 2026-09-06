@@ -290,7 +290,8 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
 .player-nav:hover{color:var(--text);border-color:var(--border3);}
 .player-nav.autoplay.on{border-color:rgba(29,185,84,.55);color:var(--green);background:rgba(29,185,84,.1);}
 .player-nav.src.on{border-color:rgba(245,166,35,.5);color:var(--yellow);background:rgba(245,166,35,.08);}
-@media(max-width:560px){ .player-nav.autoplay span,.player-nav.src span{display:none;} }
+.player-nav.shuffle.on{border-color:rgba(29,185,84,.55);color:var(--green);background:rgba(29,185,84,.1);}
+@media(max-width:560px){ .player-nav.autoplay span,.player-nav.src span,.player-nav.shuffle span{display:none;} }
 
 /* drag & drop reorder */
 .draggable-card{cursor:grab;}
@@ -399,6 +400,7 @@ html.light .tact{background:rgba(0,0,0,.55);color:#fff;}
       <button class="player-nav" id="prevBtn" onclick="playPrev()" title="Vidéo précédente (P ou ←)">⏮</button>
       <button class="player-nav" id="nextBtn" onclick="playNext()" title="Vidéo suivante (N ou →)">⏭</button>
       <button class="player-nav autoplay" id="autoplayBtn" onclick="toggleAutoplay()" title="Lecture automatique (basée sur la durée)">🔁 <span>Autoplay</span></button>
+      <button class="player-nav shuffle" id="shuffleBtn" onclick="toggleShuffle()" title="Lecture aléatoire">🔀 <span>Aléatoire</span></button>
       <button class="player-nav src" id="playerSrcBtn" onclick="togglePlayerSrc()" title="Source du lecteur">⚡ <span>Rapide</span></button>
       <div class="player-title" id="playerTitle"></div>
       <a class="player-open-yt" id="playerOpenYt" href="#" target="_blank" rel="noopener">↗ Ouvrir sur YouTube</a>
@@ -650,6 +652,7 @@ function openPlaylist(plId) {
   showRecap(pl);
   applyAutoSyncUI();
   applyAutoplayUI();
+  applyShuffleUI();
   applyPlayerSrcUI();
   maybeAutoSyncOnOpen();
 }
@@ -724,18 +727,23 @@ async function fetchYT(plId, onProg, onLog) {
     for (var i = 0; i < data.items.length; i++) {
       var s = data.items[i].snippet;
       var vid = s.resourceId.videoId;
-      var isDead = s.title === 'Deleted video' || s.title === 'Private video';
       var th = s.thumbnails || {};
       var thumb = ((th.maxres||th.high||th.medium||th.default)||{}).url || '';
+      var owner = s.videoOwnerChannelTitle || '';
+      // Deux signaux plutôt qu'un : le libellé, ET l'absence simultanée de
+      // miniature et de chaîne propriétaire — ce qu'aucune vidéo vivante n'a.
+      // Si YouTube renomme ses libellés, le second signal prend le relais.
+      var isDead = isPlaceholderTitle(s.title) || (!thumb && !owner);
+      var isPriv = /priv/i.test(s.title || '');
       items.push({
         id: vid,
-        title: isDead ? (s.title === 'Private video' ? '[Vidéo privée]' : '[Vidéo supprimée]') : s.title,
-        channel: isDead ? '' : (s.videoOwnerChannelTitle || s.channelTitle || ''),
+        title: isDead ? (isPriv ? '[Vidéo privée]' : '[Vidéo supprimée]') : s.title,
+        channel: isDead ? '' : (owner || s.channelTitle || ''),
         channelId: s.videoOwnerChannelId || '',
         thumbnail: thumb,
         url: 'https://www.youtube.com/watch?v=' + vid,
         deleted: isDead,
-        deletedKind: isDead ? (s.title === 'Private video' ? 'private' : 'deleted') : null,
+        deletedKind: isDead ? (isPriv ? 'private' : 'deleted') : null,
         addedAt: s.publishedAt || '',
         publishedAt: s.videoPublishedAt || '',
         position: s.position || i
@@ -924,6 +932,19 @@ async function refreshCurrentPlaylist(opts) {
           });
         }
         return v;
+      }
+      // FILET DE SÉCURITÉ — raison d'être du site : une donnée réelle déjà
+      // archivée ne peut JAMAIS être remplacée par un libellé générique, même si
+      // YouTube en invente un que la détection ci-dessus ne reconnaît pas encore.
+      // Un vrai renommage par le créateur passe, lui, sans encombre (le nouveau
+      // titre n'a rien d'un placeholder).
+      if (old && isPlaceholderTitle(v.title) && !isPlaceholderTitle(old.title)) {
+        v.title       = old.title;
+        v.channel     = v.channel || old.channel || '';
+        v.channelId   = v.channelId || old.channelId || '';
+        v.deleted     = true;
+        v.deletedKind = old.deletedKind || 'deleted';
+        v.deletedAt   = old.deletedAt || new Date().toISOString();
       }
       if (old && !v.thumbnail && old.thumbnail) v.thumbnail = old.thumbnail;
       return carryUserData(v, old); // keep favorites / watched / notes / cached thumb
@@ -1630,6 +1651,9 @@ function playIdx(i) {
   var hl = document.getElementById('playerHintLink'); if(hl) hl.href = v.url;
   window._playingId = v.id;
   window._playIndex = i;
+  // Un clic manuel consomme aussi la vidéo dans le cycle aléatoire en cours,
+  // sinon elle repasserait plus tard alors qu'on vient de la regarder.
+  if (shuffleEnabled()) { var _bi = _shufBag.indexOf(v.id); if (_bi > -1) _shufBag.splice(_bi, 1); }
 
   if (v.embeddable === false) {
     // status.embeddable est faux : l'iframe n'affichera qu'un écran noir.
@@ -1686,8 +1710,79 @@ function scheduleAutoplay(v){
   if(!v || !v.duration) return; // need a known duration
   _autoplayTimer = setTimeout(function(){ playNext(true); }, (v.duration + 2) * 1000);
 }
+// ── Lecture aléatoire ────────────────────────────────────────────────────────
+// Modèle « sac » (façon Spotify) : chaque vidéo affichée passe une fois avant
+// qu'un nouveau cycle démarre. Le sac contient des IDS, pas des index : il reste
+// donc valable si l'utilisateur change de tri, de filtre ou de chaîne en cours
+// de route — les ids disparus sont simplement purgés au tirage suivant.
+var _shufBag  = [];   // ids restants du cycle en cours
+var _shufHist = [];   // ids déjà joués, pour que ⏮ remonte le fil
+function shuffleEnabled(){ return !!(DB.settings && DB.settings.shuffle); }
+function applyShuffleUI(){
+  var b = document.getElementById('shuffleBtn'); if(!b) return;
+  var on = shuffleEnabled();
+  b.classList.toggle('on', on);
+  b.title = on
+    ? 'Lecture aléatoire activée — chaque vidéo affichée passe une fois avant de reboucler'
+    : 'Lecture aléatoire (parmi les vidéos affichées, filtres compris)';
+}
+function toggleShuffle(){
+  if(!DB.settings) DB.settings = {};
+  DB.settings.shuffle = !DB.settings.shuffle;
+  _shufBag = []; _shufHist = [];
+  flushSave(); applyShuffleUI();
+  toast(DB.settings.shuffle
+    ? '🔀 Aléatoire activé — chaque vidéo une fois avant de reboucler'
+    : '🔀 Aléatoire désactivé');
+}
+// index des vidéos réellement lançables, par id
+function _liveMap(){
+  var m = {};
+  (window._cv||[]).forEach(function(v,i){ if(!v.deleted) m[v.id] = i; });
+  return m;
+}
+function _refillBag(live, recent){
+  var ids = Object.keys(live);
+  for(var i=ids.length-1;i>0;i--){            // Fisher-Yates
+    var j = Math.floor(Math.random()*(i+1));
+    var t = ids[i]; ids[i] = ids[j]; ids[j] = t;
+  }
+  // Jonction de cycle : sans garde-fou, une vidéo jouée en fin de cycle peut
+  // ressortir en tête du suivant (deux passages à 2-3 vidéos d'intervalle).
+  // On repousse donc en fin de sac celles des K dernières lectures qui sont
+  // tombées dans les K premières places.
+  var K = Math.min(3, Math.floor(ids.length/3));
+  if(K > 0 && recent && recent.length){
+    var block = {};
+    recent.slice(-K).forEach(function(id){ block[id] = true; });
+    var head = [], tail = [];
+    ids.slice(0, K).forEach(function(id){ (block[id] ? tail : head).push(id); });
+    ids = head.concat(ids.slice(K)).concat(tail);
+  }
+  _shufBag = ids;
+}
+function _nextShuffleIndex(){
+  var live = _liveMap();
+  var cur = window._playingId;
+  var keep = function(id){ return live[id] !== undefined && id !== cur; };
+  _shufBag = _shufBag.filter(keep);           // purge tri/filtre/playlist changés
+  if(!_shufBag.length){ _refillBag(live, _shufHist); _shufBag = _shufBag.filter(keep); }
+  if(!_shufBag.length) return -1;             // 0 ou 1 seule vidéo affichée
+  return live[_shufBag.shift()];
+}
+
 function playNext(auto){
   if(typeof window._playIndex !== 'number') return;
+  if(shuffleEnabled()){
+    if(window._playingId){
+      _shufHist.push(window._playingId);
+      if(_shufHist.length > 300) _shufHist.shift();
+    }
+    var si = _nextShuffleIndex();
+    if(si >= 0){ playIdx(si); return; }
+    if(auto) toast('Plus rien à lire ici');
+    return;
+  }
   for(var i=window._playIndex+1; i<window._cv.length; i++){
     if(!window._cv[i].deleted){ playIdx(i); return; }
   }
@@ -1695,6 +1790,19 @@ function playNext(auto){
 }
 function playPrev(){
   if(typeof window._playIndex !== 'number') return;
+  if(shuffleEnabled()){
+    var live = _liveMap();
+    while(_shufHist.length){
+      var id = _shufHist.pop();
+      if(live[id] !== undefined && id !== window._playingId){
+        // la vidéo quittée repart en tête du sac : elle n'est pas perdue du cycle
+        if(window._playingId) _shufBag.unshift(window._playingId);
+        playIdx(live[id]); return;
+      }
+    }
+    toast('Début de la lecture aléatoire');
+    return;
+  }
   for(var i=window._playIndex-1; i>=0; i--){
     if(!window._cv[i].deleted){ playIdx(i); return; }
   }
@@ -2023,10 +2131,15 @@ function importBackup(ev){
 // ══════════════════════════════════════════════
 // UTILS
 // ══════════════════════════════════════════════
+// Reconnaît un libellé générique quelle que soit la casse, les crochets ou les
+// accents. YouTube a déjà changé ses règles d'embed deux fois : on ne suppose pas
+// que « Deleted video » restera écrit exactement comme ça pour toujours.
 function isPlaceholderTitle(t){
   if(!t) return true;
-  return t==='[Vidéo supprimée]' || t==='[Vidéo privée]'
-      || t==='Deleted video' || t==='Private video';
+  var s = String(t).trim().replace(/^\[|\]$/g,'').toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return /^(deleted|private|unavailable) video$/.test(s)
+      || /^video (supprimee|privee|indisponible)$/.test(s);
 }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtD(iso){ if(!iso) return ''; var d=new Date(iso); return isNaN(d.getTime())?'':d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}); }

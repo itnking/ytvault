@@ -6,6 +6,11 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="referrer-policy" content="strict-origin-when-cross-origin">
 <title>YT Vault</title>
+<link rel="preconnect" href="https://www.youtube.com" crossorigin>
+<link rel="preconnect" href="https://www.youtube-nocookie.com" crossorigin>
+<link rel="preconnect" href="https://i.ytimg.com" crossorigin>
+<link rel="preconnect" href="https://jnn-pa.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
 :root {
@@ -116,6 +121,11 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
 .player-blocked{display:none;padding:1.5rem;text-align:center;background:#0a0a0a;}
 .player-blocked p{font-size:.8rem;color:var(--text2);margin-bottom:.8rem;}
 .player-blocked a{color:var(--red);font-weight:700;text-decoration:none;}
+.player-hint{display:none;padding:.5rem 1rem;background:#141414;border-top:1px solid var(--border);font-size:.72rem;color:var(--text2);align-items:center;justify-content:center;gap:.7rem;flex-wrap:wrap;text-align:center;}
+.player-hint.show{display:flex;}
+.player-hint a{color:var(--red);font-weight:700;text-decoration:none;white-space:nowrap;}
+.player-hint button{background:none;border:none;color:var(--text3);cursor:pointer;font:inherit;line-height:1;}
+.player-hint button:hover{color:var(--text);}
 
 /* controls */
 .controls-bar{padding:1.1rem 2.5rem .65rem;display:flex;gap:9px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border);}
@@ -169,6 +179,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
 .dead-since{font-family:'Space Mono',monospace;font-size:.56rem;color:#ffd9d9;letter-spacing:.02em;}
 .corner-flag{position:absolute;top:7px;left:7px;z-index:2;display:flex;align-items:center;gap:4px;background:rgba(255,45,45,.92);color:#fff;font-size:.55rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:5px;box-shadow:0 2px 6px rgba(0,0,0,.4);}
 .corner-flag.priv{background:rgba(245,166,35,.95);color:#1a1200;}
+.corner-flag.noembed{background:rgba(18,18,18,.92);color:var(--yellow);border:1px solid rgba(245,166,35,.4);}
 
 /* currently playing card */
 .vcard.playing{border-color:var(--red);box-shadow:0 0 0 1px var(--red),0 8px 26px rgba(255,45,45,.18);}
@@ -278,7 +289,8 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sy
 .player-nav{background:var(--surface3);border:1px solid var(--border2);color:var(--text2);border-radius:7px;padding:.4rem .6rem;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .14s;white-space:nowrap;}
 .player-nav:hover{color:var(--text);border-color:var(--border3);}
 .player-nav.autoplay.on{border-color:rgba(29,185,84,.55);color:var(--green);background:rgba(29,185,84,.1);}
-@media(max-width:560px){ .player-nav.autoplay span{display:none;} }
+.player-nav.src.on{border-color:rgba(245,166,35,.5);color:var(--yellow);background:rgba(245,166,35,.08);}
+@media(max-width:560px){ .player-nav.autoplay span,.player-nav.src span{display:none;} }
 
 /* drag & drop reorder */
 .draggable-card{cursor:grab;}
@@ -375,13 +387,19 @@ html.light .tact{background:rgba(0,0,0,.55);color:#fff;}
   <div class="player-wrap" id="playerWrap">
     <iframe id="playerIframe" src="" allowfullscreen allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin"></iframe>
     <div class="player-blocked" id="playerBlocked">
-      <p>Cette vidéo a désactivé la lecture externe.<br>Regarde-la directement sur YouTube.</p>
-      <a id="playerFallbackLink" href="#" target="_blank">▶ Ouvrir sur YouTube</a>
+      <p id="playerBlockedMsg">Cette vidéo a désactivé la lecture externe.<br>Regarde-la directement sur YouTube.</p>
+      <a id="playerFallbackLink" href="#" target="_blank" rel="noopener">▶ Ouvrir sur YouTube</a>
+    </div>
+    <div class="player-hint" id="playerHint">
+      <span id="playerHintMsg">Le démarrage traîne ?</span>
+      <a id="playerHintLink" href="#" target="_blank" rel="noopener">▶ Ouvrir sur YouTube</a>
+      <button type="button" onclick="hidePlayerHint()" title="Masquer">✕</button>
     </div>
     <div class="player-info">
       <button class="player-nav" id="prevBtn" onclick="playPrev()" title="Vidéo précédente (P ou ←)">⏮</button>
       <button class="player-nav" id="nextBtn" onclick="playNext()" title="Vidéo suivante (N ou →)">⏭</button>
       <button class="player-nav autoplay" id="autoplayBtn" onclick="toggleAutoplay()" title="Lecture automatique (basée sur la durée)">🔁 <span>Autoplay</span></button>
+      <button class="player-nav src" id="playerSrcBtn" onclick="togglePlayerSrc()" title="Source du lecteur">⚡ <span>Rapide</span></button>
       <div class="player-title" id="playerTitle"></div>
       <a class="player-open-yt" id="playerOpenYt" href="#" target="_blank" rel="noopener">↗ Ouvrir sur YouTube</a>
       <button class="player-close" onclick="closePlayer()">✕ Fermer</button>
@@ -566,6 +584,25 @@ function saveDB() {
   }
 }
 
+// ── Écriture différée ────────────────────────────────────────────────────────
+// JSON.stringify(DB) + localStorage.setItem sont SYNCHRONES et bloquent l'onglet.
+// Avec les miniatures base64 des vidéos disparues, la base grossit sans arrêt :
+// sauvegarder pile au moment du clic « lecture » gelait la page de plus en plus
+// longtemps. On regroupe donc les écritures et on les passe en temps mort.
+var _saveTimer = null;
+function _doDeferredSave(){ _saveTimer = null; saveDB(); }
+function saveDBSoon(){
+  if(_saveTimer) return;
+  _saveTimer = setTimeout(function(){
+    if(window.requestIdleCallback) requestIdleCallback(_doDeferredSave, {timeout:900});
+    else _doDeferredSave();
+  }, 250);
+}
+function flushSave(){
+  if(_saveTimer){ clearTimeout(_saveTimer); _saveTimer = null; }
+  return saveDB();
+}
+
 function saveHTMLFile() {
   // Inject current DB into the HTML source and download
   var html = document.documentElement.outerHTML;
@@ -613,6 +650,7 @@ function openPlaylist(plId) {
   showRecap(pl);
   applyAutoSyncUI();
   applyAutoplayUI();
+  applyPlayerSrcUI();
   maybeAutoSyncOnOpen();
 }
 
@@ -712,7 +750,12 @@ async function fetchYT(plId, onProg, onLog) {
   if (aliveIds.length) {
     onLog('Durées...');
     var durMap = await fetchDurations(aliveIds, key);
-    items.forEach(function(v){ if(durMap[v.id]!=null) v.duration = durMap[v.id]; });
+    items.forEach(function(v){
+      var m = durMap[v.id]; if(!m) return;
+      if(m.duration != null) v.duration = m.duration;
+      v.embeddable    = m.embeddable;
+      v.ageRestricted = m.ageRestricted;
+    });
   }
   return items;
 }
@@ -723,17 +766,26 @@ function parseDuration(iso){
   if(!m) return 0;
   return (parseInt(m[1]||0,10)*3600) + (parseInt(m[2]||0,10)*60) + parseInt(m[3]||0,10);
 }
+// videos.list coûte 1 unité de quota par requête quel que soit le nombre de
+// « part » demandés : demander "status" en plus de "contentDetails" est gratuit.
+// status.embeddable dit si la vidéo accepte la lecture intégrée — seule façon de
+// le savoir sans l'API JS IFrame (interdite ici, cf. erreur 153).
 async function fetchDurations(ids, key){
   var map = {};
   for(var i=0;i<ids.length;i+=50){
     var batch = ids.slice(i,i+50);
-    var url = 'https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id='
+    var url = 'https://www.googleapis.com/youtube/v3/videos?part=contentDetails,status&id='
       + batch.join(',') + '&key=' + encodeURIComponent(key);
     try{
       var res = await fetch(url);
       var data = await res.json();
       if(data.items) data.items.forEach(function(it){
-        map[it.id] = parseDuration(it.contentDetails && it.contentDetails.duration);
+        var cd = it.contentDetails || {};
+        map[it.id] = {
+          duration:      parseDuration(cd.duration),
+          embeddable:    !(it.status && it.status.embeddable === false),
+          ageRestricted: !!(cd.contentRating && cd.contentRating.ytAgeRestricted)
+        };
       });
     }catch(e){}
   }
@@ -952,6 +1004,9 @@ function scheduleAutoSync(){
   if(!autoSyncEnabled()) return;
   autoSyncTimer = setInterval(function(){
     if(document.hidden) return;
+    // Pas de synchro pendant une lecture : refreshCurrentPlaylist réécrit toute la
+    // base puis reconstruit la grille -> saccade en plein visionnage.
+    if(document.getElementById('playerWrap').classList.contains('open')) return;
     if(currentPlId && document.getElementById('playlist-page').classList.contains('active')){
       refreshCurrentPlaylist({silent:true});
     }
@@ -1103,6 +1158,9 @@ function carryUserData(target, src){
   if(src.playCount)    target.playCount = src.playCount;
   if(src.watchSeconds) target.watchSeconds = src.watchSeconds;
   if(src.lastPlayedAt) target.lastPlayedAt = src.lastPlayedAt;
+  // La donnée fraîche gagne ; on ne reprend l'ancienne que si l'API n'a rien dit.
+  if(target.embeddable    === undefined && src.embeddable    !== undefined) target.embeddable    = src.embeddable;
+  if(target.ageRestricted === undefined && src.ageRestricted !== undefined) target.ageRestricted = src.ageRestricted;
   return target;
 }
 
@@ -1110,6 +1168,9 @@ function carryUserData(target, src){
 async function cacheDeadThumbnails(pl){
   var targets = pl.videos.filter(function(v){ return v.deleted && v.thumbnail && !v.thumbB64; });
   if(!targets.length) return false;
+  // 8 miniatures par passe max : chaque base64 alourdit la base, donc toutes les
+  // écritures localStorage suivantes. Le reste est traité à la synchro d'après.
+  targets = targets.slice(0, 8);
   var changed = false;
   for(var i=0;i<targets.length;i++){
     try{
@@ -1132,8 +1193,8 @@ function rerender(){
   if(document.getElementById('all-page').classList.contains('active')) renderAllVideos();
   else if(document.getElementById('playlist-page').classList.contains('active')) renderVideos();
 }
-function toggleFav(id, plId){ var v=_findV(id, plId); if(!v) return; v.fav=!v.fav; saveDB(); rerender(); }
-function toggleWatched(id, plId){ var v=_findV(id, plId); if(!v) return; v.watched=!v.watched; saveDB(); rerender(); }
+function toggleFav(id, plId){ var v=_findV(id, plId); if(!v) return; v.fav=!v.fav; saveDBSoon(); rerender(); }
+function toggleWatched(id, plId){ var v=_findV(id, plId); if(!v) return; v.watched=!v.watched; saveDBSoon(); rerender(); }
 function editNote(id, plId){
   var v=_findV(id, plId); if(!v) return;
   var n=prompt('Note personnelle pour « '+(v.title||'cette vidéo')+' » :', v.note||'');
@@ -1293,7 +1354,9 @@ function cardHTML(v, num, opts){
   var since = v.deleted ? fmtD(v.deletedAt) : '';
   var cornerFlag = v.deleted
     ? '<span class="corner-flag'+(v.deletedKind==='private'?' priv':'')+'">'+kindIcon+' '+kindLabel+'</span>'
-    : '';
+    : (v.embeddable === false
+        ? '<span class="corner-flag noembed" title="Lecture intégrée refusée par le propriétaire — s’ouvre sur YouTube">⧉ YouTube seul</span>'
+        : '');
   var deadOv = v.deleted
     ? '<div class="dead-ov"><div class="dead-box"><span class="dead-tag">'+kindLabel+'</span><span class="dead-since">'+(since?('depuis le '+since):'date inconnue')+'</span></div></div>'
     : '';
@@ -1496,6 +1559,60 @@ function openPlaylistStats(){
 // ══════════════════════════════════════════════
 // PLAYER
 // ══════════════════════════════════════════════
+// ── Source du lecteur ────────────────────────────────────────────────────────
+// youtube-nocookie.com ne peut PAS réutiliser la session YouTube du navigateur :
+// chaque lecture repart de zéro (contrôles anti-robot, consentement, aucune
+// préférence de qualité en cache) -> démarrage nettement plus lent, et les vidéos
+// à restriction d'âge sont refusées. www.youtube.com/embed réutilise la session.
+// Aucun rapport avec l'API JS IFrame : toujours pas de enablejsapi, pas de risque 153.
+function playerHost(){
+  return (DB.settings && DB.settings.playerHost === 'nocookie')
+    ? 'www.youtube-nocookie.com' : 'www.youtube.com';
+}
+function isPrivatePlayer(){ return playerHost().indexOf('nocookie') > -1; }
+function applyPlayerSrcUI(){
+  var b = document.getElementById('playerSrcBtn'); if(!b) return;
+  var priv = isPrivatePlayer();
+  b.classList.toggle('on', !priv);
+  if(b.firstChild) b.firstChild.nodeValue = priv ? '🛡 ' : '⚡ ';
+  var sp = b.querySelector('span'); if(sp) sp.textContent = priv ? 'Privé' : 'Rapide';
+  b.title = priv
+    ? 'Lecteur privé (youtube-nocookie) : démarrage plus lent, restrictions d’âge refusées. Clic = mode rapide.'
+    : 'Lecteur rapide (youtube.com) : réutilise ta session YouTube. Clic = mode privé sans cookies.';
+}
+function togglePlayerSrc(){
+  if(!DB.settings) DB.settings = {};
+  DB.settings.playerHost = isPrivatePlayer() ? 'youtube' : 'nocookie';
+  flushSave(); applyPlayerSrcUI();
+  toast(isPrivatePlayer()
+    ? '🛡 Lecteur privé (youtube-nocookie) — démarrage plus lent'
+    : '⚡ Lecteur rapide (youtube.com) — utilise ta session YouTube');
+  if(window._playingId && typeof window._playIndex === 'number') playIdx(window._playIndex);
+}
+
+// ── Filet « ça ne démarre pas ? » ────────────────────────────────────────────
+// Sans l'API JS IFrame on ne peut pas savoir si la lecture a réellement démarré.
+// On offre donc juste une porte de sortie visible au bout de quelques secondes.
+var _hintTimer = null;
+function clearPlayerHint(){
+  if(_hintTimer){ clearTimeout(_hintTimer); _hintTimer = null; }
+  var h = document.getElementById('playerHint'); if(h) h.classList.remove('show');
+}
+function hidePlayerHint(){ var h = document.getElementById('playerHint'); if(h) h.classList.remove('show'); }
+function schedulePlayerHint(v){
+  clearPlayerHint();
+  var age = !!(v && v.ageRestricted);
+  var msg = document.getElementById('playerHintMsg');
+  if(msg) msg.textContent = age
+    ? (isPrivatePlayer()
+        ? 'Restriction d’âge : le lecteur privé la refuse. Passe en ⚡ Rapide, ou :'
+        : 'Restriction d’âge : YouTube exige d’être connecté dans ce navigateur.')
+    : 'Le démarrage traîne ?';
+  _hintTimer = setTimeout(function(){
+    var h = document.getElementById('playerHint'); if(h) h.classList.add('show');
+  }, age ? 2500 : 7000);
+}
+
 function playIdx(i) {
   var v = window._cv[i]; if (!v || v.deleted) return;
   var wrap = document.getElementById('playerWrap');
@@ -1505,25 +1622,42 @@ function playIdx(i) {
   var fallback = document.getElementById('playerFallbackLink');
 
   // Reset
-  iframe.style.display = 'block';
-  blocked.style.display = 'none';
+  clearPlayerHint();
   titleEl.textContent = v.title || '';
   fallback.href = v.url;
   document.getElementById('playerOpenYt').href = v.url;
-
-  // Simple embed URL — works on hosted, local file, and portable copies alike
-  iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-  iframe.src = 'https://www.youtube-nocookie.com/embed/' + v.id + '?autoplay=1&rel=0';
-
+  var hl = document.getElementById('playerHintLink'); if(hl) hl.href = v.url;
   window._playingId = v.id;
   window._playIndex = i;
-  v.playCount = (v.playCount||0) + 1;
-  v.lastPlayedAt = new Date().toISOString();
-  watchStart(currentPlId, v.id);
-  saveDB();
-  markPlayingCard();
-  scheduleAutoplay(v);
 
+  if (v.embeddable === false) {
+    // status.embeddable est faux : l'iframe n'affichera qu'un écran noir.
+    // On ne la charge même pas, on propose YouTube tout de suite.
+    clearAutoplay(); watchStop();
+    iframe.src = '';
+    iframe.style.display = 'none';
+    document.getElementById('playerBlockedMsg').innerHTML =
+      (v.ageRestricted
+        ? 'Vidéo soumise à une restriction d’âge — YouTube refuse la lecture intégrée.'
+        : 'Le propriétaire de cette vidéo a désactivé la lecture en dehors de YouTube.')
+      + '<br>Regarde-la directement sur YouTube.';
+    blocked.style.display = 'block';
+  } else {
+    blocked.style.display = 'none';
+    iframe.style.display = 'block';
+    // Embed simple, sans enablejsapi (cf. erreur 153).
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    // L'iframe part EN PREMIER : plus aucune écriture disque avant elle.
+    iframe.src = 'https://' + playerHost() + '/embed/' + v.id + '?autoplay=1&rel=0&playsinline=1';
+    schedulePlayerHint(v);
+    v.playCount = (v.playCount||0) + 1;
+    v.lastPlayedAt = new Date().toISOString();
+    watchStart(currentPlId, v.id);
+    saveDBSoon();   // différé : le clic ne gèle plus l'onglet
+    scheduleAutoplay(v);
+  }
+
+  markPlayingCard();
   wrap.classList.add('open');
   wrap.scrollIntoView({behavior:'smooth', block:'start'});
   updateJumpFab();
@@ -1582,13 +1716,14 @@ function watchAccrue(){
 }
 function watchStop(){ watchAccrue(); window._watch = null; }
 document.addEventListener('visibilitychange', function(){
-  if(document.hidden){ watchAccrue(); if(window._watch) window._watch.start = null; }
+  if(document.hidden){ watchAccrue(); if(window._watch) window._watch.start = null; flushSave(); }
   else if(window._watch && document.getElementById('playerWrap').classList.contains('open')){
     window._watch.start = Date.now();
   }
 });
-setInterval(function(){ if(window._watch && window._watch.start){ watchAccrue(); saveDB(); } }, 15000);
-window.addEventListener('beforeunload', function(){ watchStop(); saveDB(); });
+setInterval(function(){ if(window._watch && window._watch.start){ watchAccrue(); saveDBSoon(); } }, 30000);
+window.addEventListener('beforeunload', function(){ watchStop(); flushSave(); });
+window.addEventListener('pagehide', function(){ watchStop(); flushSave(); });
 
 function markPlayingCard(){
   document.querySelectorAll('.vcard.playing').forEach(function(c){ c.classList.remove('playing'); });
@@ -1656,8 +1791,9 @@ window.addEventListener('message', function(e) {
 
 function closePlayer() {
   clearAutoplay();
+  clearPlayerHint();
   watchStop();
-  saveDB();
+  flushSave();
   var wrap = document.getElementById('playerWrap');
   wrap.classList.remove('open');
   document.getElementById('playerIframe').src = '';

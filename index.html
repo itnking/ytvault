@@ -1051,10 +1051,11 @@ function renderHome() {
   var grid = document.getElementById('playlistsGrid');
   var pls = Object.values(DB.playlists);
   if (!pls.length) {
-    grid.innerHTML = '';
+    // #emptyHome est un enfant de #playlistsGrid : le récupérer AVANT de vider la
+    // grille, sinon getElementById renvoie null et l'accueil plante à vide.
     var emp = document.getElementById('emptyHome');
-    emp.style.display = 'block';
-    grid.appendChild(emp);
+    grid.innerHTML = '';
+    if (emp) { emp.style.display = 'block'; grid.appendChild(emp); }
     return;
   }
   grid.innerHTML = pls.map(function(pl) {

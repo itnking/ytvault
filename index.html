@@ -655,6 +655,7 @@ function openPlaylist(plId) {
   applyShuffleUI();
   applyPlayerSrcUI();
   maybeAutoSyncOnOpen();
+  scheduleThumbCache();
 }
 
 // "Depuis ta dernière visite" — summarise log entries since last open
@@ -686,8 +687,11 @@ function updateMeta() {
   var syncTxt = window._syncing
     ? 'Synchronisation…'
     : 'Sync ' + (pl.lastSync ? timeAgo(pl.lastSync) : 'jamais');
+  var ts = thumbStats(pl);
+  var thumbTxt = ts.pending ? ' · 🖼 ' + ts.cached + '/' + ts.total + ' archivées' : '';
+  if(!ts.pending && ts.lost) thumbTxt = ' · 🖼 ' + ts.lost + ' miniature' + (ts.lost>1?'s':'') + ' perdue' + (ts.lost>1?'s':'') + ' (purgées par YouTube)';
   document.getElementById('plHeaderMeta').textContent =
-    total + ' vidéos' + (dead ? ' · ' + dead + ' indisponibles' : '') + ' · ' + syncTxt;
+    total + ' vidéos' + (dead ? ' · ' + dead + ' indisponibles' : '') + ' · ' + syncTxt + thumbTxt;
 }
 
 // ══════════════════════════════════════════════
@@ -987,9 +991,9 @@ async function refreshCurrentPlaylist(opts) {
     if(parts.length){ toast('↻ '+parts.join(' · ')); if(!silent) document.getElementById('saveBanner').style.display = 'flex'; }
     else if(!silent){ toast('↻ Déjà à jour'); }
 
-    // Cache thumbnails of unavailable videos so they survive YouTube purging them
-    cacheDeadThumbnails(pl).then(function(changed){
-      if(changed){ saveDB(); renderVideos(); }
+    // Archivage des miniatures (cacheThumbnails enregistre lui-même)
+    cacheThumbnails(pl, 30).then(function(changed){
+      if(changed) renderVideos();
     });
   } catch(e) {
     if(!silent) document.getElementById('plHeaderMeta').textContent = 'Erreur : ' + e.message;
@@ -1176,6 +1180,7 @@ function carryUserData(target, src){
   if(src.watched)  target.watched = true;
   if(src.note)     target.note = src.note;
   if(src.thumbB64) target.thumbB64 = src.thumbB64;
+  if(src.thumbMiss) target.thumbMiss = src.thumbMiss;
   if(src.duration) target.duration = src.duration;
   if(src.playCount)    target.playCount = src.playCount;
   if(src.watchSeconds) target.watchSeconds = src.watchSeconds;
@@ -1186,21 +1191,81 @@ function carryUserData(target, src){
   return target;
 }
 
-// Cache thumbnails of unavailable videos as base64 so they're preserved forever
-async function cacheDeadThumbnails(pl){
-  var targets = pl.videos.filter(function(v){ return v.deleted && v.thumbnail && !v.thumbB64; });
-  if(!targets.length) return false;
-  // 8 miniatures par passe max : chaque base64 alourdit la base, donc toutes les
-  // écritures localStorage suivantes. Le reste est traité à la synchro d'après.
-  targets = targets.slice(0, 8);
-  var changed = false;
-  for(var i=0;i<targets.length;i++){
-    try{
-      var r = await loadThumb(targets[i].thumbnail);
-      if(r && r.data){ targets[i].thumbB64 = r.data; changed = true; }
-    }catch(e){}
-  }
-  return changed;
+// ── Archivage des miniatures ─────────────────────────────────────────────────
+// On archive la miniature de TOUTES les vidéos, pas seulement des mortes.
+// Raison : quand YouTube purge une vidéo, il sert à sa place une image grise — à
+// ce moment-là il est déjà trop tard. N'archiver qu'après la mort revenait à
+// parier sur la vitesse de la prochaine synchro. Archiver pendant que la vidéo
+// est vivante est la seule façon de garantir le repère visuel. ~4,6 Ko/vidéo.
+var _thumbRun = false;   // une seule passe à la fois
+var _thumbFull = false;  // quota localStorage atteint : on n'en ajoute plus
+
+var THUMB_MAX_TRIES = 3;
+// Archivable = a une URL de miniature, pas encore de copie, et pas déjà abandonné.
+function _thumbTodo(v){
+  return v.thumbnail && !v.thumbB64 && (v.thumbMiss||0) < THUMB_MAX_TRIES;
+}
+function thumbStats(pl){
+  var total = 0, cached = 0, lost = 0;
+  pl.videos.forEach(function(v){
+    if(v.thumbB64){ total++; cached++; return; }
+    if(!v.thumbnail) return;
+    total++;
+    if((v.thumbMiss||0) >= THUMB_MAX_TRIES) lost++;   // purgée par YouTube, irrécupérable
+  });
+  // Les irrécupérables sortent du dénominateur : le compteur doit pouvoir finir.
+  return { total: total - lost, cached: cached, lost: lost,
+           pending: Math.max(0, total - lost - cached) };
+}
+
+async function cacheThumbnails(pl, budget){
+  if(_thumbRun || _thumbFull || !pl) return false;
+  _thumbRun = true;
+  try{
+    var targets = pl.videos.filter(_thumbTodo);
+    if(!targets.length) return false;
+    // Les vidéos déjà mortes d'abord : ce sont celles qu'on risque de perdre.
+    targets.sort(function(a,b){ return (b.deleted?1:0) - (a.deleted?1:0); });
+    targets = targets.slice(0, budget || 25);
+    var added = [], missed = false;
+    for(var i=0;i<targets.length;i++){
+      var ok = false;
+      try{
+        var r = await loadThumb(targets[i].thumbnail);
+        if(r && r.data){ targets[i].thumbB64 = r.data; added.push(targets[i]); ok = true; }
+      }catch(e){}
+      // Échec (souvent : YouTube a déjà purgé et ne sert qu'une image grise).
+      // Au bout de 3 tentatives on abandonne, sinon on boucle toutes les 8 s.
+      if(!ok){ targets[i].thumbMiss = (targets[i].thumbMiss||0) + 1; missed = true; }
+      await new Promise(function(res){ setTimeout(res, 40); }); // laisser respirer l'onglet
+    }
+    if(missed && !added.length){ saveDBSoon(); updateMeta(); }
+    if(added.length){
+      if(!saveDB()){
+        // Quota atteint : on retire ce qu'on vient d'ajouter, sinon PLUS AUCUNE
+        // écriture ne passerait ensuite (favoris, notes, journal…).
+        added.forEach(function(v){ delete v.thumbB64; });
+        _thumbFull = true;
+        saveDB();
+        toast('⚠ Stockage plein — archivage des miniatures suspendu');
+        return false;
+      }
+      updateMeta();
+    }
+    return added.length > 0;
+  } finally { _thumbRun = false; }
+}
+
+// Passe de fond : quelques miniatures toutes les 8 s pendant la consultation.
+var _thumbTimer = null;
+function scheduleThumbCache(){
+  if(_thumbTimer) clearInterval(_thumbTimer);
+  _thumbTimer = setInterval(function(){
+    if(document.hidden || window._syncing || _thumbFull) return;
+    if(!document.getElementById('playlist-page').classList.contains('active')) return;
+    var pl = DB.playlists[currentPlId];
+    if(pl) cacheThumbnails(pl, 20);
+  }, 8000);
 }
 
 function _findV(id, plId){
@@ -1367,7 +1432,9 @@ function cardHTML(v, num, opts){
   var chanUrl = v.channelId
     ? 'https://www.youtube.com/channel/'+v.channelId
     : 'https://www.youtube.com/results?search_query='+encodeURIComponent(v.channel||'');
-  var thumbSrc = (v.deleted && v.thumbB64) ? v.thumbB64 : v.thumbnail;
+  // Vidéo morte -> copie archivée. Vidéo vivante -> URL YouTube (meilleure
+  // définition), avec repli sur la copie archivée si l'URL a disparu.
+  var thumbSrc = (v.deleted && v.thumbB64) ? v.thumbB64 : (v.thumbnail || v.thumbB64 || '');
   var thumb = thumbSrc
     ? '<img src="'+thumbSrc+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
     : '<div class="nothumb">🎬</div>';
@@ -2010,6 +2077,10 @@ function loadThumb(url){
     var t=setTimeout(function(){ if(!done){done=true;res(null);} }, 6000);
     img.onload=function(){
       if(done) return; done=true; clearTimeout(t);
+      // Quand une vidéo n'existe plus, i.ytimg.com ne renvoie pas d'erreur : il sert
+      // une image GRISE de 120x90. L'archiver figerait un carré gris à la place du
+      // repère visuel, définitivement (thumbB64 rempli = plus jamais retenté).
+      if(img.naturalWidth <= 120 && img.naturalHeight <= 90){ res(null); return; }
       try{
         var w=160, h=Math.round(w*img.naturalHeight/img.naturalWidth)||90;
         var c=document.createElement('canvas'); c.width=w; c.height=h;

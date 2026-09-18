@@ -1200,15 +1200,87 @@ function carryUserData(target, src){
 var _thumbRun = false;   // une seule passe à la fois
 var _thumbFull = false;  // quota localStorage atteint : on n'en ajoute plus
 
+// ── Stockage des miniatures : IndexedDB ──────────────────────────────────────
+// localStorage plafonne à quelques Mo selon le navigateur : très insuffisant pour
+// ~1600 miniatures (~7,5 Mo). IndexedDB partage le quota d'origine (plusieurs Go)
+// et sort les images du JSON, qui redevient léger à sérialiser.
+// Les miniatures sont indexées par ID de vidéo : une vidéo présente dans deux
+// playlists n'est donc stockée qu'une fois.
+var THUMBS = new Map();   // id -> dataURL, chargé en mémoire au démarrage
+var _idb = null, _idbKO = false;
+
+function idbOpen(){
+  return new Promise(function(res){
+    if(_idb) return res(_idb);
+    if(_idbKO || typeof indexedDB === 'undefined') return res(null);
+    try{
+      var rq = indexedDB.open('ytvault_thumbs', 1);
+      rq.onupgradeneeded = function(){
+        var db = rq.result;
+        if(!db.objectStoreNames.contains('t')) db.createObjectStore('t');
+      };
+      rq.onsuccess = function(){ _idb = rq.result; res(_idb); };
+      rq.onerror   = function(){ _idbKO = true; res(null); };
+      rq.onblocked = function(){ _idbKO = true; res(null); };
+    }catch(e){ _idbKO = true; res(null); }
+  });
+}
+async function idbLoadAll(){
+  var db = await idbOpen(); if(!db) return 0;
+  return new Promise(function(res){
+    try{
+      var tx = db.transaction('t','readonly'), st = tx.objectStore('t');
+      var kq = st.getAllKeys(), vq = st.getAll();
+      tx.oncomplete = function(){
+        var k = kq.result || [], v = vq.result || [];
+        for(var i=0;i<k.length;i++) if(v[i]) THUMBS.set(k[i], v[i]);
+        res(k.length);
+      };
+      tx.onerror = function(){ res(0); };
+    }catch(e){ res(0); }
+  });
+}
+async function idbPut(id, data){
+  var db = await idbOpen(); if(!db) return false;
+  return new Promise(function(res){
+    try{
+      var tx = db.transaction('t','readwrite');
+      tx.objectStore('t').put(data, id);
+      tx.oncomplete = function(){ THUMBS.set(id, data); res(true); };
+      tx.onerror    = function(){ res(false); };
+      tx.onabort    = function(){ res(false); };
+    }catch(e){ res(false); }
+  });
+}
+// Déplace les miniatures déjà présentes dans le JSON vers IndexedDB, et les
+// retire de localStorage : c'est ce qui libère la place et lève le « stockage plein ».
+async function migrateThumbsToIDB(){
+  var pending = [];
+  Object.keys(DB.playlists||{}).forEach(function(k){
+    (DB.playlists[k].videos||[]).forEach(function(v){ if(v.thumbB64) pending.push(v); });
+  });
+  if(!pending.length) return 0;
+  var moved = 0;
+  for(var i=0;i<pending.length;i++){
+    if(await idbPut(pending[i].id, pending[i].thumbB64)){ delete pending[i].thumbB64; moved++; }
+  }
+  if(moved){
+    saveDB();
+    toast('🖼 ' + moved + ' miniature' + (moved>1?'s':'') + ' déplacée' + (moved>1?'s':'') + ' vers le stockage étendu');
+  }
+  return moved;
+}
+function thumbOf(v){ return THUMBS.get(v.id) || v.thumbB64 || ''; }
+
 var THUMB_MAX_TRIES = 3;
 // Archivable = a une URL de miniature, pas encore de copie, et pas déjà abandonné.
 function _thumbTodo(v){
-  return v.thumbnail && !v.thumbB64 && (v.thumbMiss||0) < THUMB_MAX_TRIES;
+  return v.thumbnail && !THUMBS.has(v.id) && !v.thumbB64 && (v.thumbMiss||0) < THUMB_MAX_TRIES;
 }
 function thumbStats(pl){
   var total = 0, cached = 0, lost = 0;
   pl.videos.forEach(function(v){
-    if(v.thumbB64){ total++; cached++; return; }
+    if(THUMBS.has(v.id) || v.thumbB64){ total++; cached++; return; }
     if(!v.thumbnail) return;
     total++;
     if((v.thumbMiss||0) >= THUMB_MAX_TRIES) lost++;   // purgée par YouTube, irrécupérable
@@ -1227,32 +1299,25 @@ async function cacheThumbnails(pl, budget){
     // Les vidéos déjà mortes d'abord : ce sont celles qu'on risque de perdre.
     targets.sort(function(a,b){ return (b.deleted?1:0) - (a.deleted?1:0); });
     targets = targets.slice(0, budget || 25);
-    var added = [], missed = false;
+    var added = 0, missed = false;
     for(var i=0;i<targets.length;i++){
       var ok = false;
       try{
         var r = await loadThumb(targets[i].thumbnail);
-        if(r && r.data){ targets[i].thumbB64 = r.data; added.push(targets[i]); ok = true; }
+        // L'image va dans IndexedDB, jamais dans le JSON : localStorage ne bouge
+        // plus d'un octet, seul thumbMiss (un entier) y est écrit.
+        if(r && r.data) ok = await idbPut(targets[i].id, r.data);
       }catch(e){}
-      // Échec (souvent : YouTube a déjà purgé et ne sert qu'une image grise).
-      // Au bout de 3 tentatives on abandonne, sinon on boucle toutes les 8 s.
-      if(!ok){ targets[i].thumbMiss = (targets[i].thumbMiss||0) + 1; missed = true; }
+      if(ok){ added++; if(targets[i].thumbB64) delete targets[i].thumbB64; }
+      else {
+        // Échec : souvent YouTube a purgé et ne sert qu'une image grise.
+        // Au bout de 3 tentatives on abandonne, sinon on boucle toutes les 8 s.
+        targets[i].thumbMiss = (targets[i].thumbMiss||0) + 1; missed = true;
+      }
       await new Promise(function(res){ setTimeout(res, 40); }); // laisser respirer l'onglet
     }
-    if(missed && !added.length){ saveDBSoon(); updateMeta(); }
-    if(added.length){
-      if(!saveDB()){
-        // Quota atteint : on retire ce qu'on vient d'ajouter, sinon PLUS AUCUNE
-        // écriture ne passerait ensuite (favoris, notes, journal…).
-        added.forEach(function(v){ delete v.thumbB64; });
-        _thumbFull = true;
-        saveDB();
-        toast('⚠ Stockage plein — archivage des miniatures suspendu');
-        return false;
-      }
-      updateMeta();
-    }
-    return added.length > 0;
+    if(added || missed){ saveDBSoon(); updateMeta(); }
+    return added > 0;
   } finally { _thumbRun = false; }
 }
 
@@ -1434,7 +1499,8 @@ function cardHTML(v, num, opts){
     : 'https://www.youtube.com/results?search_query='+encodeURIComponent(v.channel||'');
   // Vidéo morte -> copie archivée. Vidéo vivante -> URL YouTube (meilleure
   // définition), avec repli sur la copie archivée si l'URL a disparu.
-  var thumbSrc = (v.deleted && v.thumbB64) ? v.thumbB64 : (v.thumbnail || v.thumbB64 || '');
+  var _tb = thumbOf(v);
+  var thumbSrc = (v.deleted && _tb) ? _tb : (v.thumbnail || _tb || '');
   var thumb = thumbSrc
     ? '<img src="'+thumbSrc+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
     : '<div class="nothumb">🎬</div>';
@@ -2171,14 +2237,18 @@ async function exportPDF(){
 
 // ── Full backup (all playlists + API key) ──
 function exportBackup(){
-  dl(new Blob([JSON.stringify(DB, null, 2)],{type:'application/json'}), 'ytvault-sauvegarde-'+today()+'.json');
+  // Les miniatures vivent dans IndexedDB : sans ce bloc `thumbs`, la sauvegarde
+  // serait amputée de tout l'archivage visuel.
+  var out = { apiKey: DB.apiKey, playlists: DB.playlists, settings: DB.settings,
+              thumbs: Object.fromEntries(THUMBS) };
+  dl(new Blob([JSON.stringify(out)],{type:'application/json'}), 'ytvault-sauvegarde-'+today()+'.json');
 }
 
 function importBackup(ev){
   var file = ev.target.files && ev.target.files[0];
   if(!file){ return; }
   var reader = new FileReader();
-  reader.onload = function(){
+  reader.onload = async function(){
     try{
       var imported = JSON.parse(reader.result);
       if(!imported || typeof imported !== 'object' || !imported.playlists){
@@ -2188,6 +2258,10 @@ function importBackup(ev){
       if(!confirm('Importer cette sauvegarde ?\n\n'+n+' playlist(s).\nLes données actuelles de ce navigateur seront remplacées.')){ ev.target.value=''; return; }
       DB = { apiKey: imported.apiKey || DB.apiKey || '', playlists: imported.playlists || {}, settings: imported.settings || DB.settings || { autoSync:true } };
       saveDB();
+      // Miniatures : sauvegardes récentes (bloc thumbs) et anciennes (thumbB64 inline)
+      var ids = imported.thumbs ? Object.keys(imported.thumbs) : [];
+      for(var i=0;i<ids.length;i++) await idbPut(ids[i], imported.thumbs[ids[i]]);
+      await migrateThumbsToIDB();
       if(DB.apiKey) document.getElementById('apiKeyInput').value = DB.apiKey;
       renderHome();
       alert('✓ Sauvegarde importée — '+n+' playlist(s).');
@@ -2245,10 +2319,13 @@ function overlayClick(e,id){ if(e.target===document.getElementById(id)) closeMod
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', function(){
+window.addEventListener('DOMContentLoaded', async function(){
   loadDB();
   if(!DB.settings) DB.settings = { autoSync:true };
   applyTheme();
+  renderHome();
+  await idbLoadAll();        // miniatures déjà archivées -> mémoire
+  await migrateThumbsToIDB(); // celles restées dans le JSON -> IndexedDB (libère localStorage)
   renderHome();
 });
 </script>
